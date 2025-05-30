@@ -1,12 +1,7 @@
-# Warehouse-Sim
+# Tauri + React + Typescript
 
-Tauri-basierte Simulationssoftware zur Visualisierung und Bewertung von Lagerstrategien (Festplatzlogik vs. Zonenstrategie mit dynamischer Lagerhaltung). 
+This template should help get you started developing with Tauri, React and Typescript in Vite.
 
-## Technologien
-- Tauri + Rust
-- Next.js (React)
-- Simulationskern in Rust
-- Konfigurierbare Zonenstruktur via TOML
+## Recommended IDE Setup
 
-## Ziel
-Interaktive Visualisierung, Kennzahlenberechnung (KPI), Vergleich von Lagerstrategien.
+- [VS Code](https://code.visualstudio.com/) + [Tauri](https://marketplace.visualstudio.com/items?itemName=tauri-apps.tauri-vscode) + [rust-analyzer](https://marketplace.visualstudio.com/items?itemName=rust-lang.rust-analyzer)
