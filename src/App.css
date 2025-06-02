@@ -1,3 +1,53 @@
+.menu-bar {
+  position: fixed;       /* Fix to viewport */
+  top: 0;                /* Top edge */
+  left: 0;               /* Left edge */
+  right: 0;              /* Right edge */
+  height: 40px;          /* Set toolbar height */
+  background-color: #333;
+  color: white;
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  align-items: center;   /* Vertically center buttons */
+  padding: 0 12px;
+  z-index: 1000;         /* Stay above other elements */
+  box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+}
+
+.menu-bar button {
+  background: none;
+  border: none;
+  color: white;
+  font-size: 16px;
+  cursor: pointer;
+  padding: 4px 8px;
+}
+
+.menu-bar button:hover {
+  background-color: #555;
+}
+
+/* Push content below the menu bar */
+.container {
+  margin-top: 40px; /* same as .menu-bar height */
+  padding-top: 10vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  text-align: center;
+}
+.window-controls {
+  position: fixed;
+  top: 0;
+  right: 0;
+  display: flex;
+  align-items: center;
+  height: 40px;
+  padding: 0 12px;
+  background-color: #333;
+  z-index: 1000; /* Ensure it stays above other content */
+}
 .logo.vite:hover {
   filter: drop-shadow(0 0 2em #747bff);
 }

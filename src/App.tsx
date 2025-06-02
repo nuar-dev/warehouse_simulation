@@ -1,8 +1,10 @@
-import { useState } from "react";
+// src/App.tsx
+import React, { useState } from "react";
 import reactLogo from "./assets/react.svg";
 import { invoke } from "@tauri-apps/api/core";
 import "./App.css";
-import WarehouseDashboard from "./WarehouseDashboard"; // <=== new import
+import WarehouseDashboard from "./WarehouseDashboard";
+import { MenuBar } from "./MenuBar";  // Import here
 
 function App() {
   const [greetMsg, setGreetMsg] = useState("");
@@ -14,6 +16,8 @@ function App() {
 
   return (
     <main className="container">
+      <MenuBar /> {/* Use the menu bar component */}
+
       <h1>Welcome to Tauri + React</h1>
 
       <div className="row">
@@ -27,6 +31,7 @@ function App() {
           <img src={reactLogo} className="logo react" alt="React logo" />
         </a>
       </div>
+
       <p>Click on the Tauri, Vite, and React logos to learn more.</p>
 
       <form
@@ -45,7 +50,6 @@ function App() {
       </form>
       <p>{greetMsg}</p>
 
-      {/* Insert Warehouse Dashboard here */}
       <WarehouseDashboard />
     </main>
   );
