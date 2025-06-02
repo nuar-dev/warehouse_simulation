@@ -6,26 +6,32 @@ fn greet(name: &str) -> String {
     format!("Hello, {}! You've been greeted from Rust!", name)
 }
 
+// Import the window state plugin builder
+use tauri_plugin_window_state::Builder as WindowStateBuilder;
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
+        // Register the window state plugin for persisting window state
+        .plugin(WindowStateBuilder::default().build())
+        // Register your opener plugin
         .plugin(tauri_plugin_opener::init())
+        // Register commands
         .invoke_handler(tauri::generate_handler![greet])
+        // Setup logic on app start
         .setup(|app| {
-            // Get main window
             let window = app.get_webview_window("main").unwrap();
 
-            // Check platform at compile time
             #[cfg(any(target_os = "windows", target_os = "macos", target_os = "linux"))]
             {
-                // On desktop platforms, set fullscreen
-                window.set_fullscreen(true)?;
+                // Start not fullscreen but can toggle later via frontend
+                window.set_fullscreen(false)?;
             }
 
             #[cfg(target_os = "android")]
             {
-                // For now, maybe show a dialog or leave normal window
-                // Example: window.set_title("Mobile - unsupported");
+                // Placeholder for mobile-specific behavior
+                // e.g. window.set_title("Mobile - unsupported");
             }
 
             Ok(())
