@@ -1,58 +1,39 @@
-// src/App.tsx
 import React, { useState } from "react";
-import reactLogo from "./assets/react.svg";
-import { invoke } from "@tauri-apps/api/core";
-import "./App.css";
-import WarehouseDashboard from "./WarehouseDashboard";
-import { MenuBar } from "./MenuBar";  // Import here
+import { Button, Container, Typography, Box, TextField } from "@mui/material";
 
-function App() {
-  const [greetMsg, setGreetMsg] = useState("");
+export default function App() {
   const [name, setName] = useState("");
+  const [greetMsg, setGreetMsg] = useState("");
 
-  async function greet() {
-    setGreetMsg(await invoke("greet", { name }));
-  }
+  const greet = () => {
+    setGreetMsg(`Hello, ${name}! Welcome to your Warehouse Simulation.`);
+  };
 
   return (
-    <main className="container">
-      <MenuBar /> {/* Use the menu bar component */}
+    <Container maxWidth="sm" sx={{ mt: 4 }}>
+      <Typography variant="h4" component="h1" gutterBottom>
+        Warehouse Simulation with MUI
+      </Typography>
 
-      <h1>Welcome to Tauri + React</h1>
-
-      <div className="row">
-        <a href="https://vite.dev" target="_blank" rel="noreferrer">
-          <img src="/vite.svg" className="logo vite" alt="Vite logo" />
-        </a>
-        <a href="https://tauri.app" target="_blank" rel="noreferrer">
-          <img src="/tauri.svg" className="logo tauri" alt="Tauri logo" />
-        </a>
-        <a href="https://react.dev" target="_blank" rel="noreferrer">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-
-      <p>Click on the Tauri, Vite, and React logos to learn more.</p>
-
-      <form
-        className="row"
-        onSubmit={(e) => {
-          e.preventDefault();
-          greet();
-        }}
-      >
-        <input
-          id="greet-input"
-          onChange={(e) => setName(e.currentTarget.value)}
-          placeholder="Enter a name..."
+      <Box component="form" noValidate autoComplete="off" sx={{ mb: 2 }}>
+        <TextField
+          label="Enter your name"
+          variant="outlined"
+          fullWidth
+          value={name}
+          onChange={(e) => setName(e.target.value)}
         />
-        <button type="submit">Greet</button>
-      </form>
-      <p>{greetMsg}</p>
+      </Box>
 
-      <WarehouseDashboard />
-    </main>
+      <Button variant="contained" onClick={greet} disabled={!name}>
+        Greet Me
+      </Button>
+
+      {greetMsg && (
+        <Typography variant="h6" sx={{ mt: 3, color: "primary.main" }}>
+          {greetMsg}
+        </Typography>
+      )}
+    </Container>
   );
 }
-
-export default App;
