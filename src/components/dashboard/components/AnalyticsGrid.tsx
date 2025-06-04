@@ -47,51 +47,47 @@ const data: StatCardProps[] = [
 
 export default function MainGrid() {
   return (
-    <Box
-      sx={{
-        display: 'flex',        // enable flexbox
-        justifyContent: 'center', // center children horizontally
-        width: '100%',          // full width available
-        maxWidth: { sm: '100%', md: '1700px' },
-        mx: 'auto',             // auto margin for horizontal centering
-      }}
-    >
-      <Box sx={{ width: '100%' /* make the inner box full width */ }}>
-        <Typography component="h2" variant="h2" sx={{ mb: 2, textAlign: 'center' }}>
-          Warehouse Dashboard
-        </Typography>
-        <Grid container spacing={2} columns={12} sx={{ mb: (theme) => theme.spacing(2) }}>
-          {data.map((card, index) => (
-            <Grid key={index} size={{ xs: 12, sm: 6, lg: 3 }}>
-              <StatCard {...card} />
-            </Grid>
-          ))}
-          <Grid size={{ xs: 12, sm: 6, lg: 3 }}>
-            <HighlightedCard />
+    <Box sx={{ width: '100%', maxWidth: { sm: '100%', md: '1700px' } }}>
+      {/* cards */}
+      <Typography component="h2" variant="h6" sx={{ mb: 2 }}>
+        Overview
+      </Typography>
+      <Grid
+        container
+        spacing={2}
+        columns={12}
+        sx={{ mb: (theme) => theme.spacing(2) }}
+      >
+        {data.map((card, index) => (
+          <Grid key={index} size={{ xs: 12, sm: 6, lg: 3 }}>
+            <StatCard {...card} />
           </Grid>
-          <Grid size={{ xs: 12, md: 6 }}>
-            <SessionsChart />
-          </Grid>
-          <Grid size={{ xs: 12, md: 6 }}>
-            <PageViewsBarChart />
-          </Grid>
+        ))}
+        <Grid size={{ xs: 12, sm: 6, lg: 3 }}>
+          <HighlightedCard />
         </Grid>
-        <Typography component="h2" variant="h6" sx={{ mb: 2, textAlign: 'center' }}>
-          Details
-        </Typography>
-        <Grid container spacing={2} columns={12}>
-          <Grid size={{ xs: 12, lg: 9 }}>
-            <CustomizedDataGrid />
-          </Grid>
-          <Grid size={{ xs: 12, lg: 3 }}>
-            <Stack gap={2} direction={{ xs: 'column', sm: 'row', lg: 'column' }}>
-              <CustomizedTreeView />
-              <ChartUserByCountry />
-            </Stack>
-          </Grid>
+        <Grid size={{ xs: 12, md: 6 }}>
+          <SessionsChart />
         </Grid>
-        <Copyright sx={{ my: 4 }} />
-      </Box>
+        <Grid size={{ xs: 12, md: 6 }}>
+          <PageViewsBarChart />
+        </Grid>
+      </Grid>
+      <Typography component="h2" variant="h6" sx={{ mb: 2 }}>
+        Details
+      </Typography>
+      <Grid container spacing={2} columns={12}>
+        <Grid size={{ xs: 12, lg: 9 }}>
+          <CustomizedDataGrid />
+        </Grid>
+        <Grid size={{ xs: 12, lg: 3 }}>
+          <Stack gap={2} direction={{ xs: 'column', sm: 'row', lg: 'column' }}>
+            <CustomizedTreeView />
+            <ChartUserByCountry />
+          </Stack>
+        </Grid>
+      </Grid>
+      <Copyright sx={{ my: 4 }} />
     </Box>
   );
 }

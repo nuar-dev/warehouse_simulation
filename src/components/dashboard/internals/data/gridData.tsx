@@ -494,7 +494,7 @@ export const rows: GridRowsProp = [
     eventCount: 8564,
     users: 34240,
     viewsPerUser: 6.2,
-    averageTime: '3m 15s',
+    averageTime: '3m 15s',  
     conversions: [
       123478, 145690, 167912, 190134, 212356, 234578, 256790, 279012, 301234, 323456,
       345678, 367890, 390012, 412234, 434456, 456678, 478890, 501012, 523234, 545456,
