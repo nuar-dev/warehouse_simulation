@@ -17,14 +17,7 @@ import HelpRoundedIcon from '@mui/icons-material/HelpRounded';
 import { useMatch, useResolvedPath } from 'react-router-dom';
 import { NavLink, NavLinkProps } from 'react-router-dom';
 
-interface NavListItemProps {
-  to: string;
-  children: React.ReactNode;
-  // add other props if needed, e.g. className, style
-}
-
-function NavListItem({ to, children, ...props }: NavListItemProps) {
-  // rest remains the same
+function NavListItem({ to, children, ...props }: { to: string; children: React.ReactNode }) { 
   let resolved = useResolvedPath(to);
   let match = useMatch({ path: resolved.pathname, end: true });
 
