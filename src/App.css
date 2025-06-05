@@ -1,3 +1,3 @@
-/*
-  Stays empty for now. Only used for global styles, when defining my own React components.
-*/
+.active-menu-item {
+  background-color: #cbd5e1; /* match your hover/active color */
+}

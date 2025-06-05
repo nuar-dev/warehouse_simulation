@@ -5,6 +5,7 @@ import ListItemButton from '@mui/material/ListItemButton';
 import ListItemIcon from '@mui/material/ListItemIcon';
 import ListItemText from '@mui/material/ListItemText';
 import Stack from '@mui/material/Stack';
+
 import HomeRoundedIcon from '@mui/icons-material/HomeRounded';
 import AnalyticsRoundedIcon from '@mui/icons-material/AnalyticsRounded';
 import PeopleRoundedIcon from '@mui/icons-material/PeopleRounded';
@@ -13,17 +14,64 @@ import SettingsRoundedIcon from '@mui/icons-material/SettingsRounded';
 import InfoRoundedIcon from '@mui/icons-material/InfoRounded';
 import HelpRoundedIcon from '@mui/icons-material/HelpRounded';
 
+import { useMatch, useResolvedPath } from 'react-router-dom';
+import { NavLink, NavLinkProps } from 'react-router-dom';
+
+interface NavListItemProps {
+  to: string;
+  children: React.ReactNode;
+  // add other props if needed, e.g. className, style
+}
+
+function NavListItem({ to, children, ...props }: NavListItemProps) {
+  // rest remains the same
+  let resolved = useResolvedPath(to);
+  let match = useMatch({ path: resolved.pathname, end: true });
+
+  return (
+    <ListItemButton
+      component={NavLink}
+      to={to}
+      sx={{
+        py: 0.5,
+        display: 'flex',
+        alignItems: 'center',
+        backgroundColor: match ? 'action.selected' : 'inherit',
+      }}
+      {...props}
+    >
+      {children}
+    </ListItemButton>
+  );
+}
+
+const NavListItemButton = React.forwardRef<HTMLAnchorElement, NavLinkProps & { className?: string }>(
+  function NavListItemButton(props, ref) {
+    const { className, ...rest } = props;
+    return (
+      <NavLink
+        {...rest}
+        ref={ref}
+        className={({ isActive }) => [className, isActive ? 'active-menu-item' : ''].filter(Boolean).join(' ')}
+        style={{ textDecoration: 'none', color: 'inherit' }}
+      />
+    );
+  }
+);
+
+
+
 const mainListItems = [
-  { text: 'Home', icon: <HomeRoundedIcon /> },
-  { text: 'Analytics', icon: <AnalyticsRoundedIcon /> },
-  { text: 'Clients', icon: <PeopleRoundedIcon /> },
-  { text: 'Tasks', icon: <AssignmentRoundedIcon /> },
+  { text: 'Home', icon: <HomeRoundedIcon />, path: '/' },
+  { text: 'Analytics', icon: <AnalyticsRoundedIcon />, path: '/analytics' },
+  { text: 'Clients', icon: <PeopleRoundedIcon />, path: '/clients' },
+  { text: 'Tasks', icon: <AssignmentRoundedIcon />, path: '/tasks' },
 ];
 
 const secondaryListItems = [
-  { text: 'Settings', icon: <SettingsRoundedIcon /> },
-  { text: 'About', icon: <InfoRoundedIcon /> },
-  { text: 'Feedback', icon: <HelpRoundedIcon /> },
+  { text: 'Settings', icon: <SettingsRoundedIcon />, path: '/settings' },
+  { text: 'About', icon: <InfoRoundedIcon />, path: '/about' },
+  { text: 'Feedback', icon: <HelpRoundedIcon />, path: '/feedback' },
 ];
 
 export default function MenuContent() {
@@ -32,9 +80,14 @@ export default function MenuContent() {
       <List dense>
         {mainListItems.map((item, index) => (
           <ListItem key={index} disablePadding sx={{ display: 'block' }}>
-            <ListItemButton selected={index === 0}>
-              <ListItemIcon>{item.icon}</ListItemIcon>
-              <ListItemText primary={item.text} />
+            <ListItemButton component={NavListItemButton} to={item.path} sx={{ py: 0.5, display: 'flex', alignItems: 'center' }}>
+              <ListItemIcon sx={{ minWidth: 32, marginRight: 1, alignItems: 'center', display: 'flex' }}>
+                {item.icon}
+              </ListItemIcon>
+              <ListItemText
+                primary={item.text}
+                sx={{ margin: 0, '.MuiTypography-root': { lineHeight: 1, margin: 0 } }}
+              />
             </ListItemButton>
           </ListItem>
         ))}
@@ -42,9 +95,14 @@ export default function MenuContent() {
       <List dense>
         {secondaryListItems.map((item, index) => (
           <ListItem key={index} disablePadding sx={{ display: 'block' }}>
-            <ListItemButton>
-              <ListItemIcon>{item.icon}</ListItemIcon>
-              <ListItemText primary={item.text} />
+            <ListItemButton component={NavListItemButton} to={item.path} sx={{ py: 0.5 }}>
+              <ListItemIcon sx={{ minWidth: 32, marginRight: 1, alignItems: 'center', display: 'flex' }}>
+                {item.icon}
+              </ListItemIcon>
+              <ListItemText
+                primary={item.text}
+                sx={{ margin: 0, '.MuiTypography-root': { lineHeight: 1, margin: 0 } }}
+              />
             </ListItemButton>
           </ListItem>
         ))}

@@ -7,10 +7,11 @@ import { alpha } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
 import Box from '@mui/material/Box';
 import Stack from '@mui/material/Stack';
-
+import {Routes,Route} from 'react-router-dom';
 import AppNavbar from './components/AppNavbar';
 import Header from './components/Header';
 import MainGrid from './components/MainGrid';
+import AnalyticsGrid from './components/AnalyticsGrid';
 import SideMenu from './components/SideMenu';
 import AppTheme from '../shared-theme/AppTheme';
 
@@ -32,14 +33,13 @@ interface DashboardProps {
   disableCustomTheme?: boolean;
 }
 
-export default function Dashboard(props: DashboardProps) {
+export default function Dashboard() {
   return (
-    <AppTheme {...props} themeComponents={xThemeComponents}>
+    <AppTheme>
       <CssBaseline enableColorScheme />
       <Box sx={{ display: 'flex' }}>
         <SideMenu />
         <AppNavbar />
-        {/* Main content */}
         <Box
           component="main"
           sx={(theme) => ({
@@ -60,11 +60,14 @@ export default function Dashboard(props: DashboardProps) {
             }}
           >
             <Header />
-            <MainGrid />
+            <Routes>
+              <Route path="/" element={<MainGrid />} />
+              <Route path="/" element={<AnalyticsGrid />} />
+              {/* Add more routes here */}
+            </Routes>
           </Stack>
         </Box>
       </Box>
     </AppTheme>
   );
 }
-
