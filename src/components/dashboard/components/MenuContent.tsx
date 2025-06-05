@@ -14,29 +14,9 @@ import SettingsRoundedIcon from '@mui/icons-material/SettingsRounded';
 import InfoRoundedIcon from '@mui/icons-material/InfoRounded';
 import HelpRoundedIcon from '@mui/icons-material/HelpRounded';
 
-import { useMatch, useResolvedPath } from 'react-router-dom';
 import { NavLink, NavLinkProps } from 'react-router-dom';
 
-function NavListItem({ to, children, ...props }: { to: string; children: React.ReactNode }) { 
-  let resolved = useResolvedPath(to);
-  let match = useMatch({ path: resolved.pathname, end: true });
 
-  return (
-    <ListItemButton
-      component={NavLink}
-      to={to}
-      sx={{
-        py: 0.5,
-        display: 'flex',
-        alignItems: 'center',
-        backgroundColor: match ? 'action.selected' : 'inherit',
-      }}
-      {...props}
-    >
-      {children}
-    </ListItemButton>
-  );
-}
 
 const NavListItemButton = React.forwardRef<HTMLAnchorElement, NavLinkProps & { className?: string }>(
   function NavListItemButton(props, ref) {
@@ -55,16 +35,15 @@ const NavListItemButton = React.forwardRef<HTMLAnchorElement, NavLinkProps & { c
 
 
 const mainListItems = [
-  { text: 'Home', icon: <HomeRoundedIcon />, path: '/' },
-  { text: 'Analytics', icon: <AnalyticsRoundedIcon />, path: '/analytics' },
-  { text: 'Clients', icon: <PeopleRoundedIcon />, path: '/clients' },
-  { text: 'Tasks', icon: <AssignmentRoundedIcon />, path: '/tasks' },
+  { text: 'Dashboard', icon: <HomeRoundedIcon />, path: '/' },
+  { text: 'Simulation Settings', icon: <AnalyticsRoundedIcon />, path: '/analytics' },
+  { text: 'Warehouse', icon: <PeopleRoundedIcon />, path: '/clients' },
+  { text: 'Impact Analysis', icon: <AssignmentRoundedIcon />, path: '/tasks' },
 ];
 
 const secondaryListItems = [
   { text: 'Settings', icon: <SettingsRoundedIcon />, path: '/settings' },
   { text: 'About', icon: <InfoRoundedIcon />, path: '/about' },
-  { text: 'Feedback', icon: <HelpRoundedIcon />, path: '/feedback' },
 ];
 
 export default function MenuContent() {
@@ -72,14 +51,14 @@ export default function MenuContent() {
     <Stack sx={{ flexGrow: 1, p: 1, justifyContent: 'space-between' }}>
       <List dense>
         {mainListItems.map((item, index) => (
-          <ListItem key={index} disablePadding sx={{ display: 'block' }}>
+          <ListItem key={index} disablePadding sx={{ display: 'block', mb: 2 }}>
             <ListItemButton component={NavListItemButton} to={item.path} sx={{ py: 0.5, display: 'flex', alignItems: 'center' }}>
-              <ListItemIcon sx={{ minWidth: 32, marginRight: 1, alignItems: 'center', display: 'flex' }}>
+              <ListItemIcon sx={{ minWidth: 30, marginRight: 1, alignItems: 'center', display: 'flex' }}>
                 {item.icon}
               </ListItemIcon>
               <ListItemText
                 primary={item.text}
-                sx={{ margin: 0, '.MuiTypography-root': { lineHeight: 1, margin: 0 } }}
+                sx={{ margin: 0, '.MuiTypography-root': { lineHeight: 3, lineWidth:3, margin: 0,  } }}
               />
             </ListItemButton>
           </ListItem>

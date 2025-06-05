@@ -6,8 +6,7 @@ import App from "./App";
 ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
   <React.StrictMode>
     <BrowserRouter>
-      <App />
-    <App />
+      <App /> {/* ✅ Only render once */}
     </BrowserRouter>
-  </React.StrictMode>,
+  </React.StrictMode>
 );

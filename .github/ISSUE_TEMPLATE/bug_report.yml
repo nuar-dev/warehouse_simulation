@@ -1,0 +1,90 @@
+name: Bug Report
+description: Report a problem with the warehouse_simulation UI or backend integration
+title: "Bug: "
+labels: [bug, needs-triage]
+assignees: []
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting a bug! Please fill out the information below to help us reproduce and fix the issue quickly.
+
+  - type: input
+    id: route
+    attributes:
+      label: Affected Route or Page
+      placeholder: e.g. /analytics
+    validations:
+      required: true
+
+  - type: input
+    id: components
+    attributes:
+      label: Related Components
+      placeholder: e.g. DashboardLayout.tsx, AnalyticsGrid.tsx
+    validations:
+      required: false
+
+  - type: textarea
+    id: bug-description
+    attributes:
+      label: What happened?
+      description: Describe the bug clearly and concisely.
+      placeholder: The sidebar overlays the main content on small screens...
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to Reproduce
+      description: How can we reproduce the issue?
+      placeholder: |
+        1. Go to /analytics
+        2. Resize to mobile width
+        3. Sidebar overlaps content
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected Behavior
+      description: What should happen instead?
+      placeholder: Sidebar should collapse or be hidden on small screens
+    validations:
+      required: true
+
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: System/browser info
+      placeholder: |
+        - OS: Windows 11
+        - Browser: Chrome 124
+        - Branch: feature/mui-prototype
+        - Commit: abc123
+    validations:
+      required: false
+
+  - type: textarea
+    id: suggestions
+    attributes:
+      label: Optional Suggestions
+      description: Any suggestions for fixing or investigating the issue?
+      placeholder: Consider using useMediaQuery to toggle the sidebar...
+    validations:
+      required: false
+
+  - type: textarea
+    id: files
+    attributes:
+      label: Relevant Files or Code
+      description: Mention affected files or paste key code snippets.
+      placeholder: |
+        - src/components/dashboard/DashboardLayout.tsx
+        - src/components/dashboard/components/SideMenu.tsx
+    validations:
+      required: false

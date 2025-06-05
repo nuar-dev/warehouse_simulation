@@ -32,7 +32,7 @@ const data: StatCardProps[] = [
   },
 ];
 
-export default function MainGridMock() {
+export default function AnalyticsGridMock() {
   return (
     <div style={{ maxWidth: '1600px', margin: 'auto', padding: '2rem' }}>
       <header style={{ marginBottom: '2rem' }}>

@@ -1,19 +1,13 @@
 import * as React from 'react';
-import type {} from '@mui/x-date-pickers/themeAugmentation';
-import type {} from '@mui/x-charts/themeAugmentation';
-import type {} from '@mui/x-data-grid-pro/themeAugmentation';
-import type {} from '@mui/x-tree-view/themeAugmentation';
 import { alpha } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
 import Box from '@mui/material/Box';
 import Stack from '@mui/material/Stack';
-import {Routes,Route} from 'react-router-dom';
 import AppNavbar from './components/AppNavbar';
 import Header from './components/Header';
-import MainGrid from './components/MainGrid';
-import AnalyticsGrid from './components/AnalyticsGrid';
 import SideMenu from './components/SideMenu';
 import AppTheme from '../shared-theme/AppTheme';
+import { Outlet } from 'react-router-dom';
 
 import {
   chartsCustomizations,
@@ -22,6 +16,7 @@ import {
   treeViewCustomizations,
 } from './theme/customizations';
 
+// Inject MUI X component customizations
 const xThemeComponents = {
   ...chartsCustomizations,
   ...dataGridCustomizations,
@@ -29,13 +24,9 @@ const xThemeComponents = {
   ...treeViewCustomizations,
 };
 
-interface DashboardProps {
-  disableCustomTheme?: boolean;
-}
-
 export default function Dashboard() {
   return (
-    <AppTheme>
+    <AppTheme themeComponents={xThemeComponents}>
       <CssBaseline enableColorScheme />
       <Box sx={{ display: 'flex' }}>
         <SideMenu />
@@ -48,6 +39,8 @@ export default function Dashboard() {
               ? `rgba(${theme.vars.palette.background.defaultChannel} / 1)`
               : alpha(theme.palette.background.default, 1),
             overflow: 'auto',
+            p: 3,
+            mt: 'calc(var(--template-frame-height, 0px) + 4px)',
           })}
         >
           <Stack
@@ -60,11 +53,7 @@ export default function Dashboard() {
             }}
           >
             <Header />
-            <Routes>
-              <Route path="/" element={<MainGrid />} />
-              <Route path="/" element={<AnalyticsGrid />} />
-              {/* Add more routes here */}
-            </Routes>
+            <Outlet /> {/* Render MainGrid / AnalyticsGrid based on route */}
           </Stack>
         </Box>
       </Box>
