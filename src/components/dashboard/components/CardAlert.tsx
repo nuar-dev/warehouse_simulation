@@ -16,7 +16,15 @@ export default function CardAlert() {
         <Typography variant="body2" sx={{ mb: 2, color: 'text.secondary' }}>
           Request a feature or report an issue.
         </Typography>
-        <Button variant="contained" size="small" fullWidth>
+        <Button
+          variant="contained"
+          size="small"
+          fullWidth
+          component="a"
+          href="https://github.com/nuar-dev/warehouse_simulation/issues/new?template=bug_report.yml"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
           GitHub Issues
         </Button>
       </CardContent>

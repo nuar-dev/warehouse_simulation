@@ -36,9 +36,9 @@ const NavListItemButton = React.forwardRef<HTMLAnchorElement, NavLinkProps & { c
 
 const mainListItems = [
   { text: 'Dashboard', icon: <HomeRoundedIcon />, path: '/' },
-  { text: 'Simulation Settings', icon: <AnalyticsRoundedIcon />, path: '/analytics' },
-  { text: 'Warehouse', icon: <PeopleRoundedIcon />, path: '/clients' },
-  { text: 'Impact Analysis', icon: <AssignmentRoundedIcon />, path: '/tasks' },
+  { text: 'Simulation Settings', icon: <AnalyticsRoundedIcon />, path: '/simSetting' },
+  { text: 'Warehouse', icon: <PeopleRoundedIcon />, path: '/warehouse' },
+  { text: 'Impact Analysis', icon: <AssignmentRoundedIcon />, path: '/impactAnalysis' },
 ];
 
 const secondaryListItems = [
@@ -58,7 +58,7 @@ export default function MenuContent() {
               </ListItemIcon>
               <ListItemText
                 primary={item.text}
-                sx={{ margin: 0, '.MuiTypography-root': { lineHeight: 3, lineWidth:3, margin: 0,  } }}
+                sx={{ margin: 0, '.MuiTypography-root': { lineHeight: 3, lineWidth: 3, margin: 0, } }}
               />
             </ListItemButton>
           </ListItem>

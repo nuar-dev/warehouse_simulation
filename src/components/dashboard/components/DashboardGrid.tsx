@@ -45,7 +45,7 @@ const data: StatCardProps[] = [
   },
 ];
 
-export default function MainGrid() {
+export default function DashboardGrid() {
   return (
     <Box
       sx={{

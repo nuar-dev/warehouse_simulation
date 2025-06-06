@@ -24,7 +24,7 @@ const Drawer = styled(MuiDrawer)({
   },
 });
 
-export default function SideMenu({ onSelectPage }: { onSelectPage?: (page: string) => void }) {
+export default function SideMenu() {
   return (
     <Drawer
       variant="permanent"
@@ -53,7 +53,7 @@ export default function SideMenu({ onSelectPage }: { onSelectPage?: (page: strin
           flexDirection: 'column',
         }}
       >
-        <MenuContent onSelectPage={onSelectPage} />
+        <MenuContent />
         <CardAlert />
       </Box>
       <Stack
