@@ -1,7 +1,9 @@
 // src/contexts/LayoutProvider.tsx
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { LayoutContext, Cell } from './LayoutContext';
+import { useNotificationContext } from './NotificationContext';
+import { useSnackbar } from 'notistack';
 
 const LOCAL_STORAGE_KEY = 'warehouseLayout';
 const LOCAL_FILENAME_KEY = 'warehouseFilename';
@@ -18,6 +20,10 @@ export default function LayoutProvider({ children }: Props) {
   const [layout, setLayoutState] = useState<Cell[][] | null>(null);
   const [layoutName, setLayoutNameState] = useState<string>('Warehouse (demo)');
   const [openSelector, setOpenSelector] = useState<boolean>(false);
+
+  const { addNotification, removeNotificationByMessage } = useNotificationContext();
+  const { enqueueSnackbar } = useSnackbar();
+  const notifiedRef = useRef(false);
 
   useEffect(() => {
     const stored = localStorage.getItem(LOCAL_STORAGE_KEY);
@@ -37,6 +43,19 @@ export default function LayoutProvider({ children }: Props) {
     }
   }, []);
 
+  useEffect(() => {
+    const message = 'No warehouse layout loaded';
+    const route = '/warehouse';
+
+    if (!layout && !notifiedRef.current) {
+      addNotification(message, route);
+      notifiedRef.current = true;
+    } else if (layout && notifiedRef.current) {
+      removeNotificationByMessage(message);
+      notifiedRef.current = false;
+    }
+  }, [layout]);
+
   const setLayout = (newLayout: Cell[][], name: string) => {
     setLayoutState(newLayout);
     setLayoutNameState(name);
@@ -52,6 +71,7 @@ export default function LayoutProvider({ children }: Props) {
   const loadDefaultLayout = () => {
     setLayout(defaultLayout, 'Warehouse (demo)');
     setOpenSelector(false);
+    enqueueSnackbar('Default layout loaded.', { variant: 'success' });
   };
 
   const loadLayoutFromFile = (file: File) => {
@@ -63,20 +83,24 @@ export default function LayoutProvider({ children }: Props) {
           const name = file.name.replace(/\.[^/.]+$/, '');
           setLayout(parsed, name);
           setOpenSelector(false);
+          enqueueSnackbar(`Layout "${name}" loaded successfully.`, { variant: 'success' });
         } else {
-          alert('Invalid layout file format.');
+          enqueueSnackbar('Invalid layout file format.', { variant: 'error' });
         }
       } catch {
-        alert('Failed to parse layout file.');
+        enqueueSnackbar('Failed to parse layout file.', { variant: 'error' });
       }
     };
     reader.readAsText(file);
   };
 
   const resetLayout = () => {
+    enqueueSnackbar('Layout has been reset.', { variant: 'warning' });
     localStorage.removeItem(LOCAL_STORAGE_KEY);
     localStorage.removeItem(LOCAL_FILENAME_KEY);
-    window.location.reload();
+    setLayoutState(null);
+    setLayoutNameState('');
+    setOpenSelector(true);
   };
 
   const openSelectorDialog = () => setOpenSelector(true);

@@ -16,6 +16,8 @@ export interface LayoutContextType {
   setLayout: (layout: Cell[][], name: string) => void;
   setLayoutName: (name: string) => void;
   setOpenSelector: (open: boolean) => void;
+  openSelectorDialog: () => void;
+  closeSelector: () => void;
   loadDefaultLayout: () => void;
   loadLayoutFromFile: (file: File) => void;
   resetLayout: () => void;

@@ -17,6 +17,8 @@ import {
 } from '@mui/material';
 import LayoutProvider from '../../../contexts/LayoutProvider';
 import { useLayoutContext } from '../../../contexts/LayoutContext';
+import { useNotificationContext } from '../../../contexts/NotificationContext';
+import { useSnackbar } from 'notistack';
 
 const CenteredModal = styled(Modal)({
   display: 'flex',
@@ -37,16 +39,43 @@ function WarehouseGridInner() {
     closeSelector,
   } = useLayoutContext();
 
+  const { addNotification } = useNotificationContext();
+  const { enqueueSnackbar } = useSnackbar();
   const [confirmReset, setConfirmReset] = React.useState(false);
+
+  React.useEffect(() => {
+    if (!layout) {
+      addNotification('No warehouse layout loaded', '/warehouse');
+    }
+  }, [layout]);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) loadLayoutFromFile(file);
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      try {
+        const parsed = JSON.parse(event.target?.result as string);
+        if (Array.isArray(parsed)) {
+          loadLayoutFromFile(file);
+        } else {
+          throw new Error();
+        }
+      } catch {
+        enqueueSnackbar('Failed to load layout file. Please check the format.', { variant: 'error' });
+      }
+    };
+    reader.readAsText(file);
+  };
+
+  const handleConfirmReset = () => {
+    setConfirmReset(false);
+    resetLayout();
   };
 
   return (
     <Box sx={{ maxWidth: '1600px', margin: 'auto', p: 4 }}>
-      {/* Layout selector popup */}
       <CenteredModal open={openSelector} onClose={closeSelector}>
         <Box sx={{ p: 4, bgcolor: 'background.paper', borderRadius: 2, width: 400 }}>
           <Typography variant="h6" gutterBottom>
@@ -67,21 +96,18 @@ function WarehouseGridInner() {
         </Box>
       </CenteredModal>
 
-      {/* Reset confirmation */}
       <Dialog open={confirmReset} onClose={() => setConfirmReset(false)}>
         <DialogTitle>Are you sure you want to reset the layout?</DialogTitle>
         <DialogActions>
           <Button onClick={() => setConfirmReset(false)}>Cancel</Button>
-          <Button onClick={resetLayout} color="error">
+          <Button onClick={handleConfirmReset} color="error">
             Confirm
           </Button>
         </DialogActions>
       </Dialog>
 
-      {/* Content */}
       {layout ? (
         <>
-          {/* Header + Buttons */}
           <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
             <Typography variant="h4">{layoutName}</Typography>
             <Stack direction="row" spacing={1}>
@@ -99,7 +125,6 @@ function WarehouseGridInner() {
             </Stack>
           </Box>
 
-          {/* Grid */}
           <Box
             sx={{
               display: 'grid',
@@ -153,7 +178,6 @@ function WarehouseGridInner() {
           </Box>
         </>
       ) : (
-        // Empty layout fallback
         <Box textAlign="center" mt={8}>
           <Typography variant="h6" color="text.secondary" gutterBottom>
             Please load a warehouse layout.
