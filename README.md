@@ -1,30 +1,40 @@
-# Warehouse Simulation Project
+# 🏭 Warehouse Simulation
 
-## Overview
-
-This project aims to develop a warehouse simulation application using Tauri and React. It integrates Rust for the simulation engine and a modern web UI for interaction and visualization.
-
-## Milestones
-
-- **Initial Setup**  
-  Establish project structure, initialize Tauri with React frontend, and set up version control.
-
-- **Basic Simulation Engine**  
-  Implement the warehouse model in Rust with slots, occupancy, and simple manipulation commands.
-
-- **UI Integration**  
-  Connect the Rust simulation with the React frontend using Tauri commands and API invocations.
-
-- **Advanced Features**  
-  Expand simulation capabilities, add visualization, and implement warehouse management features like item adding/removing.
-
-- **Testing & Optimization**  
-  Test the simulation, optimize performance, and refine UI/UX based on feedback.
-
-## Documentation
-
-A detailed project background and analysis is available in the [Report](./docs/Report.pdf).
+A desktop application for simulating and visualizing warehouse layouts, built with **Tauri**, **Rust**, and **React**.  
+Supports dynamic warehouse grid creation, layout loading, and real-time UI interaction.
 
 ---
 
-*Developed by Nuar-Dev*
+## 📐 Features
+
+- Interactive warehouse grid UI (React + MUI)
+- Load layouts from file or use default layout
+- Real-time layout visualization
+- Context-based state management
+- Notification and Snackbar system
+- Full Tauri integration with Rust backend (planned: simulation logic)
+
+---
+
+## 🚀 Quickstart
+
+### 🧰 Prerequisites
+
+- [Rust](https://rust-lang.org) (nightly toolchain recommended)
+- [Node.js](https://nodejs.org/) ≥ 18
+- [npm](https://www.npmjs.com/) ≥ 9
+- [Tauri CLI](https://tauri.app/)  
+  → `cargo install tauri-cli`
+
+### 🛠 Development
+
+```bash
+# Clone and install dependencies
+git clone https://github.com/nuar-dev/warehouse_simulation.git
+cd warehouse_simulation
+
+# Install JS deps and start dev server
+npm install
+npm run tauri dev
+
+Maintained by nuar-dev
