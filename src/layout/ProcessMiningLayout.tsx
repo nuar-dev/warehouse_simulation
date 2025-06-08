@@ -5,19 +5,17 @@ import Box from '@mui/material/Box';
 import Stack from '@mui/material/Stack';
 import { Outlet } from 'react-router-dom';
 
-import AppNavbar from '@/components/dashboard/components/AppNavbar';
-import Header from '@/components/dashboard/components/Header';
-import SideMenu from '@/components/dashboard/components/SideMenu';
-import AppTheme from '@/components/shared-theme/AppTheme';
+import { AppNavbar, Header, SideMenu } from '@/layout/components';
+import AppTheme from '@/shared-theme/AppTheme';
 
 import {
   chartsCustomizations,
   dataGridCustomizations,
   datePickersCustomizations,
   treeViewCustomizations,
-} from '@/components/dashboard/theme/customizations'
+} from '@/theme/overrides';
 
-// Inject MUI X component customizations
+// Combine MUI X component customizations
 const xThemeComponents = {
   ...chartsCustomizations,
   ...dataGridCustomizations,

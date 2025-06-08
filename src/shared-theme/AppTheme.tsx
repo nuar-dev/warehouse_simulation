@@ -39,7 +39,7 @@ export default function AppTheme(props: AppThemeProps) {
           },
         });
 
-    // ✅ Safe type guard for logging
+    //Safe type guard for logging
     if (!disableCustomTheme && typeof window !== 'undefined' && 'components' in builtTheme) {
       console.log('[AppTheme] Final theme.components:', builtTheme.components);
     }

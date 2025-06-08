@@ -1,12 +1,12 @@
 import * as React from 'react';
-import Copyright from '../../../components/dashboard/internals/components/Copyright';
-import ChartUserByCountry from '../../../components/dashboard/components/ChartUserByCountry';
-import CustomizedTreeView from '../../../components/dashboard/components/CustomizedTreeView';
-import CustomizedDataGrid from '../../../components/dashboard/components/CustomizedDataGrid';
-import HighlightedCard from '../../../components/dashboard/components/HighlightedCard';
-import PageViewsBarChart from '../../../components/dashboard/components/PageViewsBarChart';
-import SessionsChart from '../../../components/dashboard/components/SessionsChart';
-import StatCard, { StatCardProps } from '../../../components/dashboard/components/StatCard';
+import Copyright from '../../../components/ui/Copyright';
+import ChartUserByCountry from '../../dashboard/components/ChartUserByCountry';
+import CustomizedTreeView from '../../../components/ui/CustomizedTreeView';
+import CustomizedDataGrid from '../../../components/ui/CustomizedDataGrid';
+import HighlightedCard from '../../../components/ui/HighlightedCard';
+import PageViewsBarChart from '../../dashboard/components/PageViewsBarChart';
+import SessionsChart from '../../dashboard/components/SessionsChart';
+import StatCard, { StatCardProps } from '../../../components/ui/StatCard';
 
 const data: StatCardProps[] = [
   {

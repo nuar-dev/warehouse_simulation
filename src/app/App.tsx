@@ -1,5 +1,5 @@
 // src/App.tsx
-import AppTheme from '@/components/shared-theme/AppTheme';
+import AppTheme from '@/shared-theme/AppTheme';
 import { NotificationProvider } from '@/contexts/NotificationContext';
 import LayoutProvider from '@/contexts/LayoutProvider';
 import SnackbarProvider from '@/contexts/SnackbarProvider';

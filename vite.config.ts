@@ -13,7 +13,7 @@ export default defineConfig(async () => ({
   plugins: [react()],
   resolve: {
     alias: {
-      "@": path.resolve(__dirname, "src"), // ✅ Now works correctly
+      "@": path.resolve(__dirname, "src"),
     },
   },
   clearScreen: false,

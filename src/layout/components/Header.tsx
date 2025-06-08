@@ -2,11 +2,11 @@
 
 import * as React from 'react';
 import Stack from '@mui/material/Stack';
-import CustomDatePicker from './CustomDatePicker';
+import CustomDatePicker from '@/components/ui/CustomDatePicker';
 import NavbarBreadcrumbs from './NavbarBreadcrumbs';
-import ColorModeIconDropdown from '../../shared-theme/ColorModeIconDropdown';
+import ColorModeIconDropdown from './ColorModeIconDropdown';
 import Search from './Search';
-import NotificationDropdown from '../../notifications/NotificationDropdown';
+import NotificationDropdown from './NotificationDropdown';
 
 export default function Header() {
   return (
