@@ -7,7 +7,7 @@
     "dev": "vite",
     "build": "tsc && vite build",
     "preview": "vite preview",
-    "tauri": "tauri"
+    "tauri": "cargo tauri"
   },
   "dependencies": {
     "@emotion/react": "^11.14.0",
@@ -31,6 +31,7 @@
   },
   "devDependencies": {
     "@tauri-apps/cli": "^2",
+    "@types/node": "^22.15.30",
     "@types/react": "^18.3.1",
     "@types/react-dom": "^18.3.1",
     "@types/react-window": "^1.8.8",

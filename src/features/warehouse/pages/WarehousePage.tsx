@@ -1,4 +1,4 @@
-// src/components/dashboard/components/WarehouseGrid.tsx
+// src/components/dashboard/components/WarehousePage.tsx
 
 import * as React from 'react';
 import {
@@ -26,7 +26,7 @@ const CenteredModal = styled(Modal)({
   justifyContent: 'center',
 });
 
-function WarehouseGridInner() {
+function WarehousePageInner() {
   const theme = useTheme();
   const {
     layout,
@@ -191,10 +191,10 @@ function WarehouseGridInner() {
   );
 }
 
-export default function WarehouseGrid() {
+export default function WarehousePage() {
   return (
     <LayoutProvider>
-      <WarehouseGridInner />
+      <WarehousePageInner />
     </LayoutProvider>
   );
 }

@@ -3,18 +3,19 @@ import { alpha } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
 import Box from '@mui/material/Box';
 import Stack from '@mui/material/Stack';
-import AppNavbar from './components/AppNavbar';
-import Header from './components/Header';
-import SideMenu from './components/SideMenu';
-import AppTheme from '../shared-theme/AppTheme';
 import { Outlet } from 'react-router-dom';
+
+import AppNavbar from '@/components/dashboard/components/AppNavbar';
+import Header from '@/components/dashboard/components/Header';
+import SideMenu from '@/components/dashboard/components/SideMenu';
+import AppTheme from '@/components/shared-theme/AppTheme';
 
 import {
   chartsCustomizations,
   dataGridCustomizations,
   datePickersCustomizations,
   treeViewCustomizations,
-} from './theme/customizations';
+} from '@/components/dashboard/theme/customizations'
 
 // Inject MUI X component customizations
 const xThemeComponents = {
@@ -24,7 +25,7 @@ const xThemeComponents = {
   ...treeViewCustomizations,
 };
 
-export default function Dashboard() {
+export default function ProcessMiningLayout() {
   return (
     <AppTheme themeComponents={xThemeComponents}>
       <CssBaseline enableColorScheme />
@@ -53,7 +54,7 @@ export default function Dashboard() {
             }}
           >
             <Header />
-            <Outlet /> {/* Render MainGrid / AnalyticsGrid based on route */}
+            <Outlet />
           </Stack>
         </Box>
       </Box>

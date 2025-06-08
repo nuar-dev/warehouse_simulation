@@ -3,14 +3,14 @@ import Grid from '@mui/material/Grid';
 import Box from '@mui/material/Box';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
-import Copyright from '../internals/components/Copyright';
-import ChartUserByCountry from './ChartUserByCountry';
-import CustomizedTreeView from './CustomizedTreeView';
-import CustomizedDataGrid from './CustomizedDataGrid';
-import HighlightedCard from './HighlightedCard';
-import PageViewsBarChart from './PageViewsBarChart';
-import SessionsChart from './SessionsChart';
-import StatCard, { StatCardProps } from './StatCard';
+import Copyright from '../../../components/dashboard/internals/components/Copyright';
+import ChartUserByCountry from '../../../components/dashboard/components/ChartUserByCountry';
+import CustomizedTreeView from '../../../components/dashboard/components/CustomizedTreeView';
+import CustomizedDataGrid from '../../../components/dashboard/components/CustomizedDataGrid';
+import HighlightedCard from '../../../components/dashboard/components/HighlightedCard';
+import PageViewsBarChart from '../../../components/dashboard/components/PageViewsBarChart';
+import SessionsChart from '../../../components/dashboard/components/SessionsChart';
+import StatCard, { StatCardProps } from '../../../components/dashboard/components/StatCard';
 
 const data: StatCardProps[] = [
   {
@@ -45,7 +45,7 @@ const data: StatCardProps[] = [
   },
 ];
 
-export default function DashboardGrid() {
+export default function DashboardPage() {
   return (
     <Box
       sx={{
