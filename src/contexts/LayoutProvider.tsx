@@ -4,13 +4,10 @@ import React, { useState, useEffect, useRef } from 'react';
 import { LayoutContext, Cell } from './LayoutContext';
 import { useNotificationContext } from './NotificationContext';
 import { useSnackbar } from 'notistack';
+import { loadDefaultLayoutFromTauri } from '@/utils/layoutLoader';
 
 const LOCAL_STORAGE_KEY = 'warehouseLayout';
 const LOCAL_FILENAME_KEY = 'warehouseFilename';
-
-const defaultLayout: Cell[][] = Array.from({ length: 20 }, () =>
-  Array.from({ length: 36 }, () => ({ type: 'road' }))
-);
 
 interface Props {
   children: React.ReactNode;
@@ -39,9 +36,40 @@ export default function LayoutProvider({ children }: Props) {
         console.warn('Invalid layout in localStorage.');
       }
     } else {
-      setOpenSelector(true);
+      loadRustLayout(); // First-time load
     }
   }, []);
+
+  const loadRustLayout = async () => {
+    try {
+      const warehouse = await loadDefaultLayoutFromTauri();
+      const [width, height] = warehouse.dimensions;
+
+      const layoutGrid: Cell[][] = Array.from({ length: height }, () =>
+        Array.from({ length: width }, () => ({ type: 'road' }))
+      );
+
+      for (const type of warehouse.storage_types) {
+        for (const bin of type.bins) {
+          layoutGrid[bin.y][bin.x] = {
+            type: type.id as Cell['type'], // ✅ Use type.id (e.g., "high_rack", "pick_zone")
+            label: bin.id,
+          };
+        }
+      }
+
+      setLayout(layoutGrid, warehouse.id);
+      setOpenSelector(false); // ✅ FIX: Close popup after successful load
+      enqueueSnackbar(`Rust layout "${warehouse.id}" loaded.`, {
+        variant: 'success',
+        autoHideDuration: 3000, // Optional: explicit timing
+      });
+    } catch (error) {
+      console.error('Failed to load layout from Rust:', error);
+      enqueueSnackbar('Failed to load layout from Rust.', { variant: 'error' });
+      setOpenSelector(true);
+    }
+  };
 
   useEffect(() => {
     const message = 'No warehouse layout loaded';
@@ -69,9 +97,7 @@ export default function LayoutProvider({ children }: Props) {
   };
 
   const loadDefaultLayout = () => {
-    setLayout(defaultLayout, 'Warehouse (demo)');
-    setOpenSelector(false);
-    enqueueSnackbar('Default layout loaded.', { variant: 'success' });
+    loadRustLayout(); // Reuse same logic
   };
 
   const loadLayoutFromFile = (file: File) => {

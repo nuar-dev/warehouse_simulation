@@ -2,7 +2,8 @@
 
 import { createContext, useContext } from 'react';
 
-export type CellType = 'shelf' | 'road' | 'comm' | 'wall';
+// 🟢 Updated to match backend types
+export type CellType = 'high_rack' | 'pick_zone' | 'road' | 'comm';
 
 export interface Cell {
   type: CellType;
