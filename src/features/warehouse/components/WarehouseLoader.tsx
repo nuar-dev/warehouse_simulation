@@ -11,7 +11,7 @@ import {
   styled,
 } from '@mui/material';
 import { useLocation } from 'react-router-dom';
-import WarehouseGrid from '../../../features/warehouse/pages/WarehousePage';
+import WarehouseGrid from '../pages/WarehousePage';
 import { useLayoutContext } from '../../../contexts/LayoutContext';
 
 const CenteredModal = styled(Modal)({

@@ -76,7 +76,7 @@ function TimelineEvents() {
   );
 }
 
-export default function ImpactAnalysisGrid() {
+export default function ImpactAnalysisPage() {
   return (
     <Box sx={{ width: '100%', px: 2, py: 4 }}>
       <Typography variant="h4" gutterBottom textAlign="center">
