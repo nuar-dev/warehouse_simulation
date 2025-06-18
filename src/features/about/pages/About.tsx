@@ -2,14 +2,14 @@
 import * as React from 'react';
 import { Box, Typography } from '@mui/material';
 
-export default function AppSettingsPage() {
+export default function About() {
   return (
     <Box sx={{ p: 4 }}>
       <Typography variant="h4" gutterBottom>
-        App Settings
+        About
       </Typography>
       <Typography variant="body1" color="text.secondary">
-        This page is currently empty. Settings UI will be added here.
+        This page is currently empty. Information be added here.
       </Typography>
     </Box>
   );
