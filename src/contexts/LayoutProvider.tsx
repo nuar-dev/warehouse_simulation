@@ -1,151 +1,258 @@
 // src/contexts/LayoutProvider.tsx
 
-import React, { useState, useEffect, useRef } from 'react';
-import { LayoutContext, Cell } from './LayoutContext';
+import React, { useState, useEffect, useRef, ReactNode } from 'react';
+import { LayoutContext, Cell, CellType } from './LayoutContext';
 import { useNotificationContext } from './NotificationContext';
 import { useSnackbar } from 'notistack';
 import { loadDefaultLayoutFromTauri } from '@/utils/layoutLoader';
+import { v4 as uuidv4 } from 'uuid';
 
-const LOCAL_STORAGE_KEY = 'warehouseLayout';
-const LOCAL_FILENAME_KEY = 'warehouseFilename';
+const LOCAL_STORAGE_KEY   = 'warehouseLayouts';
+const LOCAL_FILENAME_KEY  = 'warehouseLayoutNames';
+const LOCAL_ACTIVE_ID_KEY = 'warehouseActiveLayoutId';
 
 interface Props {
   children: React.ReactNode;
 }
 
 export default function LayoutProvider({ children }: Props) {
-  const [layout, setLayoutState] = useState<Cell[][] | null>(null);
+  // Multi‐layout state
+  const [layoutsMap, setLayoutsMap] = useState<Record<string, Cell[][]>>({});
+  const [namesMap, setNamesMap]     = useState<Record<string, string>>({});
+  const [activeId, setActiveId]     = useState<string | null>(null);
+
+  // Legacy single‐layout API state
+  const [layout, setLayoutState]         = useState<Cell[][] | null>(null);
   const [layoutName, setLayoutNameState] = useState<string>('Warehouse (demo)');
-  const [openSelector, setOpenSelector] = useState<boolean>(false);
+
+  // Selector dialog visibility + manual-closure flag
+  const [openSelector, setOpenSelector]    = useState<boolean>(false);
+  const [selectorClosed, setSelectorClosed] = useState<boolean>(false);
+
+  // App‐wide footer content
+  const [footerContent, setFooterContent] = useState<ReactNode | null>(null);
 
   const { addNotification, removeNotificationByMessage } = useNotificationContext();
   const { enqueueSnackbar } = useSnackbar();
   const notifiedRef = useRef(false);
 
+  // Restore or load default on mount
   useEffect(() => {
-    const stored = localStorage.getItem(LOCAL_STORAGE_KEY);
-    const storedName = localStorage.getItem(LOCAL_FILENAME_KEY);
-    if (stored) {
-      try {
-        const parsed = JSON.parse(stored);
-        if (Array.isArray(parsed)) {
-          setLayoutState(parsed);
-          setLayoutNameState(storedName || 'Warehouse (demo)');
+    try {
+      const sl = localStorage.getItem(LOCAL_STORAGE_KEY);
+      const sn = localStorage.getItem(LOCAL_FILENAME_KEY);
+      const sa = localStorage.getItem(LOCAL_ACTIVE_ID_KEY);
+
+      if (sl && sn) {
+        const lm = JSON.parse(sl) as Record<string, Cell[][]>;
+        const nm = JSON.parse(sn) as Record<string, string>;
+        setLayoutsMap(lm);
+        setNamesMap(nm);
+
+        const id = sa && lm[sa] ? sa : Object.keys(lm)[0] || null;
+        if (id) {
+          // Activate restored layout
+          setActiveId(id);
+          setLayoutState(lm[id]);
+          setLayoutNameState(nm[id]);
+          return;
         }
-      } catch {
-        console.warn('Invalid layout in localStorage.');
       }
-    } else {
-      loadRustLayout(); // First-time load
+    } catch {
+      console.warn('Failed to restore layouts from storage.');
     }
+    loadDefaultLayout();
   }, []);
 
-  const loadRustLayout = async () => {
-    try {
-      const warehouse = await loadDefaultLayoutFromTauri();
-      const [width, height] = warehouse.dimensions;
-
-      const layoutGrid: Cell[][] = Array.from({ length: height }, () =>
-        Array.from({ length: width }, () => ({ type: 'road' }))
-      );
-
-      for (const type of warehouse.storage_types) {
-        for (const bin of type.bins) {
-          layoutGrid[bin.y][bin.x] = {
-            type: type.id as Cell['type'], // ✅ Use type.id (e.g., "high_rack", "pick_zone")
-            label: bin.id,
-          };
-        }
-      }
-
-      setLayout(layoutGrid, warehouse.id);
-      setOpenSelector(false); // ✅ FIX: Close popup after successful load
-      enqueueSnackbar(`Rust layout "${warehouse.id}" loaded.`, {
-        variant: 'success',
-        autoHideDuration: 3000, // Optional: explicit timing
-      });
-    } catch (error) {
-      console.error('Failed to load layout from Rust:', error);
-      enqueueSnackbar('Failed to load layout from Rust.', { variant: 'error' });
-      setOpenSelector(true);
-    }
-  };
-
+  // Persist changes
   useEffect(() => {
-    const message = 'No warehouse layout loaded';
-    const route = '/warehouse';
+    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(layoutsMap));
+    localStorage.setItem(LOCAL_FILENAME_KEY, JSON.stringify(namesMap));
+    if (activeId) {
+      localStorage.setItem(LOCAL_ACTIVE_ID_KEY, activeId);
+    }
+  }, [layoutsMap, namesMap, activeId]);
 
+  // Show notification banner when no layout loaded
+  useEffect(() => {
+    const msg = 'No warehouse layout loaded';
     if (!layout && !notifiedRef.current) {
-      addNotification(message, route);
+      addNotification(msg, '/warehouse');
       notifiedRef.current = true;
     } else if (layout && notifiedRef.current) {
-      removeNotificationByMessage(message);
+      removeNotificationByMessage(msg);
       notifiedRef.current = false;
     }
   }, [layout]);
 
-  const setLayout = (newLayout: Cell[][], name: string) => {
-    setLayoutState(newLayout);
-    setLayoutNameState(name);
-    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(newLayout));
-    localStorage.setItem(LOCAL_FILENAME_KEY, name);
+  // Load default from Rust
+  const loadDefaultLayout = async () => {
+    try {
+      const warehouse = await loadDefaultLayoutFromTauri();
+      const { length, width } = warehouse;  // length = X-axis, width = Y-axis
+
+      // Build bin lookup
+      const binMap = new Map<string, { type: CellType; label: string }>();
+      warehouse.storage_types.forEach((st) =>
+        st.bins.forEach((bin) => {
+          if (bin.x < length && bin.y < width) {
+            binMap.set(`${bin.x},${bin.y}`, { type: st.id as CellType, label: bin.id });
+          }
+        })
+      );
+
+      // Grid: rows = width, cols = length
+      const grid: Cell[][] = Array.from({ length: width }, (_, y) =>
+        Array.from({ length: length }, (_, x) => {
+          const entry = binMap.get(`${x},${y}`);
+          return entry ? entry : ({ type: 'road' } as Cell);
+        })
+      );
+
+      const id   = warehouse.id || uuidv4();
+      const name = warehouse.name;
+
+      // Register new layout
+      setLayoutsMap((lm) => ({ ...lm, [id]: grid }));
+      setNamesMap((nm) => ({ ...nm, [id]: name }));
+
+      // Activate immediately
+      setActiveId(id);
+      setLayoutState(grid);
+      setLayoutNameState(name);
+
+      // Close selector modal if open
+      setOpenSelector(false);
+      enqueueSnackbar(`Default layout "${name}" loaded.`, { variant: 'success' });
+    } catch (err) {
+      console.error('Error loading default layout:', err);
+      enqueueSnackbar('Failed to load default layout.', { variant: 'error' });
+    }
   };
 
-  const setLayoutName = (name: string) => {
-    setLayoutNameState(name);
-    localStorage.setItem(LOCAL_FILENAME_KEY, name);
-  };
-
-  const loadDefaultLayout = () => {
-    loadRustLayout(); // Reuse same logic
-  };
-
+  // Load a layout from a JSON file
   const loadLayoutFromFile = (file: File) => {
     const reader = new FileReader();
-    reader.onload = (event) => {
+    reader.onload = (e) => {
       try {
-        const parsed = JSON.parse(event.target?.result as string);
-        if (Array.isArray(parsed)) {
-          const name = file.name.replace(/\.[^/.]+$/, '');
-          setLayout(parsed, name);
-          setOpenSelector(false);
-          enqueueSnackbar(`Layout "${name}" loaded successfully.`, { variant: 'success' });
-        } else {
-          enqueueSnackbar('Invalid layout file format.', { variant: 'error' });
-        }
+        const parsed = JSON.parse(e.target?.result as string);
+        if (!Array.isArray(parsed)) throw new Error();
+
+        const name = file.name.replace(/\.[^/.]+$/, '');
+        const id   = `${name}-${Date.now()}`;
+
+        setLayoutsMap((lm) => ({ ...lm, [id]: parsed }));
+        setNamesMap((nm) => ({ ...nm, [id]: name }));
+
+        setActiveId(id);
+        setLayoutState(parsed);
+        setLayoutNameState(name);
+
+        setOpenSelector(false);
+        enqueueSnackbar(`Layout "${name}" loaded.`, { variant: 'success' });
       } catch {
-        enqueueSnackbar('Failed to parse layout file.', { variant: 'error' });
+        enqueueSnackbar('Invalid layout file.', { variant: 'error' });
       }
     };
     reader.readAsText(file);
   };
 
+  // Switch the active tab to another layout ID
+  const setActiveLayout = (id: string) => {
+    const grid = layoutsMap[id];
+    const name = namesMap[id];
+    if (grid) {
+      setActiveId(id);
+      setLayoutState(grid);
+      setLayoutNameState(name);
+    }
+  };
+
+  // Remove a layout (by ID) from the map
+  const removeLayout = (id: string) => {
+    setLayoutsMap((lm) => {
+      const copy = { ...lm };
+      delete copy[id];
+      return copy;
+    });
+    setNamesMap((nm) => {
+      const copy = { ...nm };
+      delete copy[id];
+      return copy;
+    });
+
+    // If removing the active layout, switch or clear
+    if (activeId === id) {
+      const remaining = Object.keys(layoutsMap).filter((k) => k !== id);
+      if (remaining.length) {
+        setActiveLayout(remaining[0]);
+      } else {
+        resetLayout();
+      }
+    }
+  };
+
+  // Reset/clear all layouts
   const resetLayout = () => {
-    enqueueSnackbar('Layout has been reset.', { variant: 'warning' });
+    enqueueSnackbar('All layouts have been reset.', { variant: 'warning' });
     localStorage.removeItem(LOCAL_STORAGE_KEY);
     localStorage.removeItem(LOCAL_FILENAME_KEY);
+    localStorage.removeItem(LOCAL_ACTIVE_ID_KEY);
+    setLayoutsMap({});
+    setNamesMap({});
+    setActiveId(null);
     setLayoutState(null);
     setLayoutNameState('');
+    setSelectorClosed(false);
     setOpenSelector(true);
   };
 
-  const openSelectorDialog = () => setOpenSelector(true);
-  const closeSelector = () => setOpenSelector(false);
+  // Shortcut to open selector (resets closed flag)
+  const openSelectorDialog = () => {
+    setSelectorClosed(false);
+    setOpenSelector(true);
+  };
+  // Shortcut to close selector and mark as manually closed
+  const closeSelector = () => {
+    setOpenSelector(false);
+    setSelectorClosed(true);
+  };
 
   return (
     <LayoutContext.Provider
       value={{
         layout,
         layoutName,
-        setLayout,
-        setLayoutName,
+        layoutsMap,
+        namesMap,
+        activeId,
         openSelector,
+        selectorClosed,
+
+        setLayout: (g, n) => {
+          const id = `${n}-${Date.now()}`;
+          setLayoutsMap((lm) => ({ ...lm, [id]: g }));
+          setNamesMap((nm) => ({ ...nm, [id]: n }));
+          setActiveId(id);
+          setLayoutState(g);
+          setLayoutNameState(n);
+        },
+        setLayoutName: setLayoutNameState,
         setOpenSelector,
         openSelectorDialog,
         closeSelector,
+        onSelectorClose: closeSelector,
+
         loadDefaultLayout,
         loadLayoutFromFile,
         resetLayout,
+
+        setActiveLayout,
+        removeLayout,
+
+        // Footer registration
+        footerContent,
+        setFooterContent,
       }}
     >
       {children}

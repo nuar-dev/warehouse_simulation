@@ -201,8 +201,11 @@ pub fn get_default_layout() -> Warehouse {
     });
 
     Warehouse {
-        id: "Default Layout".into(),
-        dimensions: (36, 20, 1),
+        id: "default_layout".into(),
+        name: "Default Layout".into(),
+        length: 36,
+        width: 20,
+        height: 1,
         storage_types: types,
     }
 }

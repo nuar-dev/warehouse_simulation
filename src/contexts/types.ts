@@ -14,7 +14,10 @@ export interface StorageType {
 }
 
 export interface Warehouse {
-  id: string;
-  dimensions: [number, number, number]; // [length, width, height]
+  id: string;       // unique identifier, e.g. UUID
+  name: string;     // user-friendly name for tab display
+  length: number;   // warehouse length (X-axis)
+  width: number;    // warehouse width (Y-axis)
+  height: number;   // warehouse height (Z-axis)
   storage_types: StorageType[];
 }

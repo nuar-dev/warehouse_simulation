@@ -3,7 +3,10 @@ use serde::{Deserialize, Serialize};
 #[derive(Serialize, Deserialize, Clone)]
 pub struct Warehouse {
     pub id: String,
-    pub dimensions: (u32, u32, u32),
+    pub name: String,
+    pub length: u32,
+    pub width: u32,
+    pub height: u32,
     pub storage_types: Vec<StorageType>,
 }
 

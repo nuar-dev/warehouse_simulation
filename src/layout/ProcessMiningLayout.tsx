@@ -1,3 +1,5 @@
+// src/layout/ProcessMiningLayout.tsx
+
 import * as React from 'react';
 import { alpha } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
@@ -7,6 +9,9 @@ import { Outlet } from 'react-router-dom';
 
 import { AppNavbar, Header, SideMenu } from '@/layout/components';
 import AppTheme from '@/shared-theme/AppTheme';
+import Footer from './components/Footer';
+
+import { useLayoutContext } from '@/contexts/LayoutContext';
 
 import {
   chartsCustomizations,
@@ -24,12 +29,15 @@ const xThemeComponents = {
 };
 
 export default function ProcessMiningLayout() {
+  const { footerContent } = useLayoutContext();
+
   return (
     <AppTheme themeComponents={xThemeComponents}>
       <CssBaseline enableColorScheme />
       <Box sx={{ display: 'flex' }}>
         <SideMenu />
         <AppNavbar />
+
         <Box
           component="main"
           sx={(theme) => ({
@@ -47,13 +55,20 @@ export default function ProcessMiningLayout() {
             sx={{
               alignItems: 'center',
               mx: 3,
-              pb: 5,
+              // bottom padding to clear the footer (48px) + some gap
+              pb: 7,
               mt: { xs: 8, md: 0 },
             }}
           >
             <Header />
             <Outlet />
           </Stack>
+
+          {/* App‐wide footer: visual container */}
+          <Footer>
+            {/* Feature‐registered content (e.g. warehouse tabs) */}
+            {footerContent}
+          </Footer>
         </Box>
       </Box>
     </AppTheme>

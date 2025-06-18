@@ -12,15 +12,22 @@ export default function Header() {
   return (
     <Stack
       direction="row"
-      sx={{
+      spacing={2}
+      sx={(theme) => ({
         display: { xs: 'none', md: 'flex' },
+        position: 'sticky',
+        top: 0,
+        zIndex: theme.zIndex.appBar,       // above page content
+        bgcolor: 'background.paper',       // ensure opaque background
         width: '100%',
         alignItems: { xs: 'flex-start', md: 'center' },
         justifyContent: 'space-between',
         maxWidth: { sm: '100%', md: '1700px' },
         pt: 1.5,
-      }}
-      spacing={2}
+        // optional: add a bottom border/shadow
+        borderBottom: 1,
+        borderColor: 'divider',
+      })}
     >
       <NavbarBreadcrumbs />
       <Stack direction="row" sx={{ gap: 1 }}>

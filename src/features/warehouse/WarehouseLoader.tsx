@@ -1,66 +1,57 @@
-// features/warehouse/components/WarehouseLoader.tsx
+// src/features/warehouse/components/WarehouseLoader.tsx
 
 import React from 'react';
-import {
-  Box,
-  Button,
-  Stack,
-} from '@mui/material';
+import { Box, IconButton, Tooltip } from '@mui/material';
+import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
 import { useLocation } from 'react-router-dom';
 import { useLayoutContext } from '@/contexts/LayoutContext';
-import LayoutSettingsDialog from './components/LayoutSettingsDialog';
 import LayoutSelectorDialog from './components/LayoutSelectorDialog';
+import LayoutSettingsDialog from './components/LayoutSettingsDialog';
 import Warehouse from './pages/Warehouse';
 
 export default function WarehouseLoader() {
   const location = useLocation();
   const {
-    layout,
+    layoutsMap,
+    activeId,
     openSelector,
     openSelectorDialog,
-    resetLayout,
+    closeSelector,
+    selectorClosed,
   } = useLayoutContext();
 
   const [settingsOpen, setSettingsOpen] = React.useState(false);
+  const layout = activeId ? layoutsMap[activeId] : null;
 
+  // Auto‐open selector only if not already closed by user
   React.useEffect(() => {
-    if (location.pathname === '/warehouse' && !layout && !openSelector) {
+    if (
+      location.pathname === '/warehouse' &&
+      !layout &&
+      !openSelector &&
+      !selectorClosed
+    ) {
       openSelectorDialog();
     }
-  }, [location.pathname, layout, openSelector]);
+  }, [
+    location.pathname,
+    layout,
+    openSelector,
+    selectorClosed,
+    openSelectorDialog,
+  ]);
 
   return (
     <>
-      {layout && (
-        <Box
-          sx={{
-            position: 'sticky',
-            top: 0,
-            zIndex: 1000,
-            bgcolor: 'background.paper',
-            p: 1,
-            display: 'flex',
-            justifyContent: 'space-between',
-          }}
-        >
-          <Stack direction="row" spacing={1}>
-            <Button variant="outlined" size="small" onClick={openSelectorDialog}>
-              Change Layout
-            </Button>
-            <Button variant="outlined" size="small" onClick={() => setSettingsOpen(true)}>
-              Settings
-            </Button>
-            <Button variant="outlined" size="small" color="error" onClick={resetLayout}>
-              Reset Layout
-            </Button>
-          </Stack>
-        </Box>
-      )}
+      {/* Dialogs */}
+      <LayoutSelectorDialog open={openSelector} onClose={closeSelector} />
+      <LayoutSettingsDialog
+        open={settingsOpen}
+        onClose={() => setSettingsOpen(false)}
+      />
 
-      <LayoutSelectorDialog />
-      <LayoutSettingsDialog open={settingsOpen} onClose={() => setSettingsOpen(false)} />
-
-      <Warehouse />
+      {/* The actual warehouse grid */}
+        <Warehouse />
     </>
   );
 }
