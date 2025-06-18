@@ -201,7 +201,7 @@ pub fn get_default_layout() -> Warehouse {
     });
 
     Warehouse {
-        id: "sap_like_default".into(),
+        id: "Default Layout".into(),
         dimensions: (36, 20, 1),
         storage_types: types,
     }
