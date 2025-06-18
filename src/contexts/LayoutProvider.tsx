@@ -15,28 +15,52 @@ interface Props {
   children: React.ReactNode;
 }
 
+/**  
+ * Append “ (1)”, “ (2)”, … until base is unique among existingNames  
+ */
+function generateUniqueName(base: string, existingNames: string[]): string {
+  if (!existingNames.includes(base)) return base;
+  let idx = 1, name: string;
+  do {
+    name = `${base} (${idx++})`;
+  } while (existingNames.includes(name));
+  return name;
+}
+
 export default function LayoutProvider({ children }: Props) {
-  // Multi‐layout state
-  const [layoutsMap, setLayoutsMap] = useState<Record<string, Cell[][]>>({});
-  const [namesMap, setNamesMap]     = useState<Record<string, string>>({});
-  const [activeId, setActiveId]     = useState<string | null>(null);
+  // ─── Core multi-layout state ──────────────────────────────────────────
+  const [layoutsMap, setLayoutsMap]   = useState<Record<string, Cell[][]>>({});
+  const [namesMap,   setNamesMap]     = useState<Record<string, string>>({});
+  const [layoutOrder,setLayoutOrder]  = useState<string[]>([]);
+  const [activeId,   setActiveId]     = useState<string | null>(null);
 
-  // Legacy single‐layout API state
-  const [layout, setLayoutState]         = useState<Cell[][] | null>(null);
-  const [layoutName, setLayoutNameState] = useState<string>('Warehouse (demo)');
+  // ─── Legacy single-layout API ────────────────────────────────────────
+  const [layout,       setLayoutState]     = useState<Cell[][] | null>(null);
+  const [layoutName,   setLayoutNameState] = useState<string>('Warehouse (demo)');
 
-  // Selector dialog visibility + manual-closure flag
-  const [openSelector, setOpenSelector]    = useState<boolean>(false);
-  const [selectorClosed, setSelectorClosed] = useState<boolean>(false);
+  // ─── Selector dialog state ───────────────────────────────────────────
+  const [openSelector,   setOpenSelector]   = useState(false);
+  const [selectorClosed, setSelectorClosed] = useState(false);
 
-  // App‐wide footer content
+  // ─── Footer content ──────────────────────────────────────────────────
   const [footerContent, setFooterContent] = useState<ReactNode | null>(null);
 
+  // ─── Reorder support ─────────────────────────────────────────────────
+  const reorderLayout = (from: number, to: number) => {
+    setLayoutOrder((order) => {
+      const next = [...order];
+      const [moved] = next.splice(from, 1);
+      next.splice(to, 0, moved);
+      return next;
+    });
+  };
+
+  // ─── Notification helpers ────────────────────────────────────────────
   const { addNotification, removeNotificationByMessage } = useNotificationContext();
   const { enqueueSnackbar } = useSnackbar();
   const notifiedRef = useRef(false);
 
-  // Restore or load default on mount
+  // ─── Restore or initialize layouts ──────────────────────────────────
   useEffect(() => {
     try {
       const sl = localStorage.getItem(LOCAL_STORAGE_KEY);
@@ -48,10 +72,10 @@ export default function LayoutProvider({ children }: Props) {
         const nm = JSON.parse(sn) as Record<string, string>;
         setLayoutsMap(lm);
         setNamesMap(nm);
+        setLayoutOrder(Object.keys(lm));
 
         const id = sa && lm[sa] ? sa : Object.keys(lm)[0] || null;
         if (id) {
-          // Activate restored layout
           setActiveId(id);
           setLayoutState(lm[id]);
           setLayoutNameState(nm[id]);
@@ -64,16 +88,14 @@ export default function LayoutProvider({ children }: Props) {
     loadDefaultLayout();
   }, []);
 
-  // Persist changes
+  // ─── Persist layouts to localStorage ────────────────────────────────
   useEffect(() => {
     localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(layoutsMap));
     localStorage.setItem(LOCAL_FILENAME_KEY, JSON.stringify(namesMap));
-    if (activeId) {
-      localStorage.setItem(LOCAL_ACTIVE_ID_KEY, activeId);
-    }
+    if (activeId) localStorage.setItem(LOCAL_ACTIVE_ID_KEY, activeId);
   }, [layoutsMap, namesMap, activeId]);
 
-  // Show notification banner when no layout loaded
+  // ─── Notify if no layout is loaded ──────────────────────────────────
   useEffect(() => {
     const msg = 'No warehouse layout loaded';
     if (!layout && !notifiedRef.current) {
@@ -85,71 +107,70 @@ export default function LayoutProvider({ children }: Props) {
     }
   }, [layout]);
 
-  // Load default from Rust
+  // ─── Register helper (unique name + append to order) ─────────────────
+  /** 
+   * Register layout under `id` with a generated unique display name.
+   * Returns that unique name.
+   */
+  const registerLayout = (id: string, grid: Cell[][], rawName: string): string => {
+    const existing = Object.values(namesMap);
+    const uniqueName = generateUniqueName(rawName, existing);
+    setLayoutsMap((lm) => ({ ...lm, [id]: grid }));
+    setNamesMap  ((nm) => ({ ...nm, [id]: uniqueName }));
+    setLayoutOrder((ord) => [...ord, id]);
+    return uniqueName;
+  };
+
+  // ─── Core actions ────────────────────────────────────────────────────
+
+  /** Load default layout from Rust, register & activate it */
   const loadDefaultLayout = async () => {
     try {
-      const warehouse = await loadDefaultLayoutFromTauri();
-      const { length, width } = warehouse;  // length = X-axis, width = Y-axis
-
-      // Build bin lookup
-      const binMap = new Map<string, { type: CellType; label: string }>();
-      warehouse.storage_types.forEach((st) =>
+      const wh = await loadDefaultLayoutFromTauri();
+      const { length, width } = wh;
+      const binMap = new Map<string, Cell>();
+      wh.storage_types.forEach((st) =>
         st.bins.forEach((bin) => {
           if (bin.x < length && bin.y < width) {
-            binMap.set(`${bin.x},${bin.y}`, { type: st.id as CellType, label: bin.id });
+            binMap.set(
+              `${bin.x},${bin.y}`,
+              { type: st.id as CellType, label: bin.id }
+            );
           }
         })
       );
-
-      // Grid: rows = width, cols = length
       const grid: Cell[][] = Array.from({ length: width }, (_, y) =>
-        Array.from({ length: length }, (_, x) => {
-          const entry = binMap.get(`${x},${y}`);
-          return entry ? entry : ({ type: 'road' } as Cell);
-        })
+        Array.from({ length }, (_, x) =>
+          binMap.get(`${x},${y}`) || ({ type: 'road' as CellType })
+        )
       );
-
-      const id   = warehouse.id || uuidv4();
-      const name = warehouse.name;
-
-      // Register new layout
-      setLayoutsMap((lm) => ({ ...lm, [id]: grid }));
-      setNamesMap((nm) => ({ ...nm, [id]: name }));
-
-      // Activate immediately
+      const id = uuidv4();
+      const chosenName = registerLayout(id, grid, wh.id);
       setActiveId(id);
       setLayoutState(grid);
-      setLayoutNameState(name);
-
-      // Close selector modal if open
+      setLayoutNameState(chosenName);
       setOpenSelector(false);
-      enqueueSnackbar(`Default layout "${name}" loaded.`, { variant: 'success' });
-    } catch (err) {
-      console.error('Error loading default layout:', err);
+      enqueueSnackbar(`Loaded "${chosenName}".`, { variant: 'success' });
+    } catch {
       enqueueSnackbar('Failed to load default layout.', { variant: 'error' });
     }
   };
 
-  // Load a layout from a JSON file
+  /** Load a user JSON file, register & activate */
   const loadLayoutFromFile = (file: File) => {
     const reader = new FileReader();
     reader.onload = (e) => {
       try {
-        const parsed = JSON.parse(e.target?.result as string);
+        const parsed = JSON.parse(e.target!.result as string);
         if (!Array.isArray(parsed)) throw new Error();
-
-        const name = file.name.replace(/\.[^/.]+$/, '');
-        const id   = `${name}-${Date.now()}`;
-
-        setLayoutsMap((lm) => ({ ...lm, [id]: parsed }));
-        setNamesMap((nm) => ({ ...nm, [id]: name }));
-
+        const rawName = file.name.replace(/\.[^/.]+$/, '');
+        const id = `${rawName}-${Date.now()}`;
+        const chosenName = registerLayout(id, parsed as Cell[][], rawName);
         setActiveId(id);
-        setLayoutState(parsed);
-        setLayoutNameState(name);
-
+        setLayoutState(parsed as Cell[][]);
+        setLayoutNameState(chosenName);
         setOpenSelector(false);
-        enqueueSnackbar(`Layout "${name}" loaded.`, { variant: 'success' });
+        enqueueSnackbar(`Loaded "${chosenName}".`, { variant: 'success' });
       } catch {
         enqueueSnackbar('Invalid layout file.', { variant: 'error' });
       }
@@ -157,49 +178,39 @@ export default function LayoutProvider({ children }: Props) {
     reader.readAsText(file);
   };
 
-  // Switch the active tab to another layout ID
+  /** Activate an existing layout by ID */
   const setActiveLayout = (id: string) => {
     const grid = layoutsMap[id];
-    const name = namesMap[id];
     if (grid) {
       setActiveId(id);
       setLayoutState(grid);
-      setLayoutNameState(name);
+      setLayoutNameState(namesMap[id]);
     }
   };
 
-  // Remove a layout (by ID) from the map
+  /** Remove a layout, update order, and switch/reset if needed */
   const removeLayout = (id: string) => {
-    setLayoutsMap((lm) => {
-      const copy = { ...lm };
-      delete copy[id];
-      return copy;
-    });
-    setNamesMap((nm) => {
-      const copy = { ...nm };
-      delete copy[id];
-      return copy;
-    });
+    const name = namesMap[id] || id;
+    setLayoutsMap((lm) => { const c = { ...lm }; delete c[id]; return c; });
+    setNamesMap  ((nm) => { const c = { ...nm }; delete c[id]; return c; });
+    setLayoutOrder((ord) => ord.filter((x) => x !== id));
+    enqueueSnackbar(`Closed "${name}".`, { variant: 'success' });
 
-    // If removing the active layout, switch or clear
     if (activeId === id) {
-      const remaining = Object.keys(layoutsMap).filter((k) => k !== id);
-      if (remaining.length) {
-        setActiveLayout(remaining[0]);
-      } else {
-        resetLayout();
-      }
+      const rem = layoutOrder.filter((x) => x !== id);
+      rem.length ? setActiveLayout(rem[0]) : resetLayout();
     }
   };
 
-  // Reset/clear all layouts
+  /** Clear all layouts + storage, then re-open selector */
   const resetLayout = () => {
-    enqueueSnackbar('All layouts have been reset.', { variant: 'warning' });
+    enqueueSnackbar('All layouts reset.', { variant: 'warning' });
     localStorage.removeItem(LOCAL_STORAGE_KEY);
     localStorage.removeItem(LOCAL_FILENAME_KEY);
     localStorage.removeItem(LOCAL_ACTIVE_ID_KEY);
     setLayoutsMap({});
     setNamesMap({});
+    setLayoutOrder([]);
     setActiveId(null);
     setLayoutState(null);
     setLayoutNameState('');
@@ -207,16 +218,9 @@ export default function LayoutProvider({ children }: Props) {
     setOpenSelector(true);
   };
 
-  // Shortcut to open selector (resets closed flag)
-  const openSelectorDialog = () => {
-    setSelectorClosed(false);
-    setOpenSelector(true);
-  };
-  // Shortcut to close selector and mark as manually closed
-  const closeSelector = () => {
-    setOpenSelector(false);
-    setSelectorClosed(true);
-  };
+  // ─── Selector dialog shortcuts ────────────────────────────────────────
+  const openSelectorDialog = () => { setSelectorClosed(false); setOpenSelector(true); };
+  const closeSelector      = () => { setOpenSelector(false); setSelectorClosed(true); };
 
   return (
     <LayoutContext.Provider
@@ -225,17 +229,16 @@ export default function LayoutProvider({ children }: Props) {
         layoutName,
         layoutsMap,
         namesMap,
+        layoutOrder,
         activeId,
         openSelector,
         selectorClosed,
 
-        setLayout: (g, n) => {
-          const id = `${n}-${Date.now()}`;
-          setLayoutsMap((lm) => ({ ...lm, [id]: g }));
-          setNamesMap((nm) => ({ ...nm, [id]: n }));
-          setActiveId(id);
-          setLayoutState(g);
-          setLayoutNameState(n);
+        setLayout: (grid, rawName) => {
+          const id = `${rawName}-${Date.now()}`;
+          const chosenName = registerLayout(id, grid, rawName);
+          setActiveLayout(id);
+          setLayoutNameState(chosenName);
         },
         setLayoutName: setLayoutNameState,
         setOpenSelector,
@@ -250,9 +253,10 @@ export default function LayoutProvider({ children }: Props) {
         setActiveLayout,
         removeLayout,
 
-        // Footer registration
         footerContent,
         setFooterContent,
+
+        reorderLayout,
       }}
     >
       {children}

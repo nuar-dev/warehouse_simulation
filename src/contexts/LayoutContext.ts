@@ -58,6 +58,12 @@ export interface LayoutContextType {
   footerContent: ReactNode | null;
   /** Register or clear the footer’s content */
   setFooterContent: (content: ReactNode | null) => void;
+
+  // 🔴 Reorder support:
+  /** Current order of tabs (layout IDs) */
+  layoutOrder: string[];
+  /** Move tab from one index to another */
+  reorderLayout: (from: number, to: number) => void;
 }
 
 export const LayoutContext = createContext<LayoutContextType | undefined>(undefined);

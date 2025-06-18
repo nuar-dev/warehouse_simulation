@@ -26,6 +26,11 @@ export default function Warehouse() {
     selectorClosed,
     openSelector,
     setFooterContent,
+
+    // 🔴 drag‐to‐delete context values:
+    draggingId,
+    stopDragging,
+    removeLayout,
   } = useLayoutContext();
 
   const theme = useTheme();
@@ -81,11 +86,29 @@ export default function Warehouse() {
               <AddCircleOutlineIcon sx={{ fontSize: 48 }} />
             </IconButton>
           </Tooltip>
-        )
-        }
-      </Box >
+        )}
+      </Box>
     );
   }
+
+  // 🔴 Handlers for dragging over and dropping onto the warehouse area
+  const handleDragOver = (e: React.DragEvent) => {
+    if (!draggingId) return;  // only allow when dragging a tab
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    if (!draggingId) return;
+    e.preventDefault();
+    // stop the drag state immediately
+    stopDragging();
+    // confirm with user before deleting
+    const id = draggingId;
+    if (window.confirm(`Delete layout “${id}”?`)) {
+      removeLayout(id);
+    }
+  };
 
   return (
     <Box sx={{ maxWidth: '1600px', mx: 'auto', p: 4 }}>
@@ -95,7 +118,24 @@ export default function Warehouse() {
       </Box>
 
       {/* relative wrapper for grid + controls */}
-      <Box sx={{ position: 'relative', display: 'inline-block' }}>
+      {/* 🔴 make this area a drop target */}
+      <Box
+        sx={{ position: 'relative', display: 'inline-block' }}
+        onDragOver={handleDragOver}
+        onDrop={handleDrop}
+      >
+        {/* 🔴 red tint overlay when dragging */}
+        {draggingId && (
+          <Box
+            sx={{
+              position: 'absolute',
+              inset: 0,
+              bgcolor: 'rgba(255,0,0,0.1)',
+              zIndex: 5,
+            }}
+          />
+        )}
+
         {/* controls just outside grid */}
         <Box
           sx={{
