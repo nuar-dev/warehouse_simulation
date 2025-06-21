@@ -1,109 +1,131 @@
 // src/features/sim_settings/components/MasterDataSidebar.tsx
-
-import React, { useState, useMemo, MouseEvent } from 'react';
+import React from 'react'
 import {
-  Paper,
   Box,
-  TextField,
-  Accordion,
-  AccordionSummary,
-  AccordionDetails,
+  Paper,
   List,
   ListItemButton,
   ListItemText,
-  Menu,
-  MenuItem,
+  Collapse,
+  IconButton,
   Typography,
-} from '@mui/material';
-import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+  Divider,
+  useTheme,
+} from '@mui/material'
+import ChevronLeftIcon from '@mui/icons-material/ChevronLeft'
+import ChevronRightIcon from '@mui/icons-material/ChevronRight'
+import ExpandLess from '@mui/icons-material/ExpandLess'
+import ExpandMore from '@mui/icons-material/ExpandMore'
 
-// Example data—swap out for real master-data hooks later
-const DATA: Record<string, string[]> = {
-  'Storage Types': ['Pallet Rack', 'Carton Flow', 'Bulk Floor'],
-  'Bins': ['BIN-001', 'BIN-002', 'BIN-A01'],
-  'Hazard Classes': ['Class A', 'Class B', 'Class C'],
-  'Resources': ['Forklift F1', 'Cart T2', 'Picker P123'],
-};
+export type SidebarNode = {
+  id: string
+  label: string
+  children?: SidebarNode[]
+}
 
-export default function MasterDataSidebar() {
-  const [search, setSearch] = useState('');
-  const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
-  const [ctxItem, setCtxItem] = useState<string>('');
+interface SidebarProps {
+  items: SidebarNode[]
+  selectedId: string | null
+  onSelect: (id: string) => void
+}
 
-  // filter categories + items
-  const filtered = useMemo(() => {
-    if (!search) return DATA;
-    const q = search.toLowerCase();
-    const out: Record<string, string[]> = {};
-    for (const [cat, items] of Object.entries(DATA)) {
-      const matches = items.filter((i) => i.toLowerCase().includes(q));
-      if (cat.toLowerCase().includes(q) || matches.length) {
-        out[cat] = matches.length ? matches : items;
-      }
-    }
-    return out;
-  }, [search]);
+export default function MasterDataSidebar({
+  items,
+  selectedId,
+  onSelect,
+}: SidebarProps) {
+  const theme = useTheme()
+  const [open, setOpen] = React.useState(true)
+  const [openMap, setOpenMap] = React.useState<Record<string, boolean>>({})
 
-  function onContext(e: MouseEvent<HTMLElement>, item: string) {
-    e.preventDefault();
-    setCtxItem(item);
-    setAnchorEl(e.currentTarget);
+  // same vertical offset your <main> uses:
+  const contentOffset = 'calc(var(--template-frame-height+200,0px) + 4px)'
+
+  const handleToggleSidebar = () => setOpen((v) => !v)
+  const handleToggleNode = (id: string) =>
+    setOpenMap((m) => ({ ...m, [id]: !m[id] }))
+
+  const ToggleButton = (
+    <IconButton
+      onClick={handleToggleSidebar}
+      size="medium"
+      sx={{
+        position: 'fixed',
+        right: open ? `280px` : 0,
+        top: `calc(${contentOffset} + (100vh - ${contentOffset})/2 - 200px)`,
+        zIndex: theme.zIndex.drawer + 1,
+        bgcolor: 'background.paper',
+        border: 1,
+        borderColor: 'divider',
+      }}
+    >
+      {open ? <ChevronLeftIcon /> : <ChevronRightIcon />}
+    </IconButton>
+  )
+
+  if (!open) {
+    return <>{ToggleButton}</>
   }
-  function closeContext() {
-    setAnchorEl(null);
-    setCtxItem('');
+
+  const renderNode = (node: SidebarNode, depth = 0) => {
+    const hasChildren = Array.isArray(node.children) && node.children.length > 0
+    const isExpanded = !!openMap[node.id]
+
+    return (
+      <React.Fragment key={node.id}>
+        <ListItemButton
+          onClick={() =>
+            hasChildren ? handleToggleNode(node.id) : onSelect(node.id)
+          }
+          selected={node.id === selectedId}
+          sx={{ pl: 2 + depth * 2 }}
+        >
+          <ListItemText primary={node.label} />
+          {hasChildren &&
+            (isExpanded ? <ExpandLess /> : <ExpandMore />)}
+        </ListItemButton>
+        {hasChildren && (
+          <Collapse in={isExpanded} timeout="auto" unmountOnExit>
+            <List disablePadding>
+              {node.children!.map((child) => renderNode(child, depth + 1))}
+            </List>
+          </Collapse>
+        )}
+      </React.Fragment>
+    )
   }
 
   return (
-    <Paper
-      square
-      elevation={1}
-      sx={{
-        width: 280,
-        height: '100%',
-        p: 1,
-        boxSizing: 'border-box',
-        overflowY: 'auto',
-      }}
-    >
-      <TextField
-        placeholder="Search master data…"
-        value={search}
-        onChange={(e) => setSearch(e.target.value)}
-        size="small"
-        fullWidth
-        sx={{ mb: 1 }}
-      />
-
-      {Object.entries(filtered).map(([cat, items]) => (
-        <Accordion key={cat} defaultExpanded={!!search}>
-          <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-            <Typography variant="subtitle1">{cat}</Typography>
-          </AccordionSummary>
-          <AccordionDetails sx={{ p: 0 }}>
-            <List dense>
-              {items.map((it) => (
-                <ListItemButton
-                  key={it}
-                  onContextMenu={(e) => onContext(e, it)}
-                >
-                  <ListItemText primary={it} />
-                </ListItemButton>
-              ))}
-            </List>
-          </AccordionDetails>
-        </Accordion>
-      ))}
-
-      <Menu
-        anchorEl={anchorEl}
-        open={Boolean(anchorEl)}
-        onClose={closeContext}
+    <>
+      {ToggleButton}
+      <Paper
+        square
+        elevation={1}
+        sx={{
+          width: 280,
+          position: 'fixed',
+          right: 0,
+          top: contentOffset,
+          height: `calc(100vh - ${contentOffset})`,
+          boxSizing: 'border-box',
+          display: 'flex',
+          flexDirection: 'column',
+          overflow: 'hidden',
+          borderLeft: 1,
+          borderColor: 'divider',
+          zIndex: theme.zIndex.drawer,
+        }}
       >
-        <MenuItem onClick={closeContext}>Edit “{ctxItem}”</MenuItem>
-        <MenuItem onClick={closeContext}>Delete “{ctxItem}”</MenuItem>
-        <MenuItem onClick={closeContext}>Add New…</MenuItem>
-      </Menu>
-    </Paper>
-  );
+        <Box sx={{ p: 2 }}>
+          <Typography variant="h6">Simulation Settings</Typography>
+        </Box>
+        <Divider />
+        <Box sx={{ flex: 1, overflowY: 'auto' }}>
+          <List disablePadding>
+            {items.map((node) => renderNode(node))}
+          </List>
+        </Box>
+      </Paper>
+    </>
+  )
 }
