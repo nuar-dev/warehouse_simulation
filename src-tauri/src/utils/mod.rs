@@ -4,6 +4,7 @@
 //! Keeps OData client, error definitions, and caching logic in one place.
 
 pub mod error;
+pub mod odata;
 pub mod odata_client; // generic SAP OData + HTTP client // error types & Into<tauri::Error> adapters
 
 // if you add cache.rs:

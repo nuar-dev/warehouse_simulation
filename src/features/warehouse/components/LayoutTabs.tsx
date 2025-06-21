@@ -69,7 +69,6 @@ function SortableTab({ id }: { id: string }) {
           }}
         >
           {namesMap[id]}
-          {/* replace IconButton with non-button span to avoid nesting */}
           <Box
             component="span"
             onClick={(e) => {
@@ -133,7 +132,6 @@ export default function LayoutTabs() {
     activeId,
   } = useLayoutContext();
 
-  // track drag state to suppress invalid value warning
   const [isDragging, setIsDragging] = useState(false);
 
   const sensors = useSensors(
@@ -154,6 +152,18 @@ export default function LayoutTabs() {
     }
   };
 
+  // Ensure we always pass a non-null string to Tabs
+  const normalizedActiveId: string = (() => {
+    if (activeId && layoutOrder.includes(activeId)) {
+      return activeId;
+    }
+    return layoutOrder.length > 0 ? layoutOrder[0] : '';
+  })();
+
+  const tabsValue: string | false = isDragging
+    ? false
+    : normalizedActiveId;
+
   return (
     <Box
       sx={{
@@ -169,10 +179,12 @@ export default function LayoutTabs() {
         onDragStart={handleDragStart}
         onDragEnd={handleDragEnd}
       >
-        <SortableContext items={layoutOrder} strategy={horizontalListSortingStrategy}>
+        <SortableContext 
+          items={layoutOrder} 
+          strategy={horizontalListSortingStrategy}
+        >
           <Tabs
-            // only supply a valid value or false
-            value={!isDragging && layoutOrder.includes(activeId as string) ? activeId : false}
+            value={tabsValue}
             variant="scrollable"
             scrollButtons="auto"
             TabIndicatorProps={{ style: { display: 'none' } }}

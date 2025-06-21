@@ -1,72 +1,193 @@
-import { Box, Typography, Stack } from '@mui/material';
+// src/features/sim_settings/pages/SimSettings.tsx
+
+import React from 'react';
+import {
+  Box,
+  Paper,
+  Typography,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  SelectChangeEvent,
+  Slider,
+  IconButton,
+  useTheme,
+} from '@mui/material';
 import Grid from '@mui/material/Grid';
+import MenuIcon from '@mui/icons-material/Menu';
+import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 
-import Copyright from '@/components/ui/Copyright';
-import ChartUserByCountry from '@/features/dashboard/components/ChartUserByCountry';
-import CustomizedTreeView from '@/components/ui/CustomizedTreeView';
-import CustomizedDataGrid from '@/components/ui/CustomizedDataGrid';
-import HighlightedCard from '@/components/ui/HighlightedCard';
-import PageViewsBarChart from '@/features/dashboard/components/PageViewsBarChart';
-import SessionsChart from '@/features/dashboard/components/SessionsChart';
-import StatCard, { StatCardProps } from '@/components/ui/StatCard';
+import { useLayoutContext } from '@/contexts/LayoutContext';
+import { DataSource, useDataSource } from '@/contexts/DataSourceContext';
+import MasterDataSidebar from '../components/MasterDataSidebar';
 
-type SimSettingProps = {
-  statCards: StatCardProps[];
-};
+interface PanelConfig {
+  layoutId: string;
+  dataSource: DataSource;
+  spawnRate: number;
+}
 
-export default function SimSetting({ statCards }: SimSettingProps) {
+export default function SimSettings() {
+  const theme = useTheme();
+  const { layoutOrder, namesMap } = useLayoutContext();
+  const layouts = layoutOrder.map((id) => ({ id, name: namesMap[id] }));
+  const panelCount = layouts.length > 1 ? 2 : 1;
+
+  const { source: globalSource, setSource: setGlobalSource } = useDataSource();
+
+  // sidebar visibility
+  const [showSidebar, setShowSidebar] = React.useState(true);
+
+  // panel configs
+  const [panels, setPanels] = React.useState<PanelConfig[]>(
+    () =>
+      layouts.slice(0, panelCount).map((l) => ({
+        layoutId: l.id,
+        dataSource: globalSource,
+        spawnRate: 1,
+      }))
+  );
+  React.useEffect(() => {
+    setPanels((prev) =>
+      layouts.slice(0, panelCount).map((l, i) => ({
+        layoutId: l.id,
+        dataSource: prev[i]?.dataSource ?? globalSource,
+        spawnRate: prev[i]?.spawnRate ?? 1,
+      }))
+    );
+  }, [layouts, panelCount, globalSource]);
+
+  if (layouts.length === 0) {
+    return (
+      <Box textAlign="center" mt={4}>
+        <Typography variant="h6" color="text.secondary">
+          No layouts defined. Create one in the Layout tab.
+        </Typography>
+      </Box>
+    );
+  }
+
   return (
     <Box
       sx={{
-        display: 'flex',
-        justifyContent: 'center',
-        width: '100%',
-        maxWidth: { sm: '100%', md: '1700px' },
-        mx: 'auto',
-        px: 2,
-        py: 4,
+        display: 'grid',
+        gridTemplateRows: 'auto 1fr',
+        gridTemplateColumns: showSidebar ? '1fr 280px' : '1fr',
+        height: '100%',
       }}
     >
-      <Box sx={{ width: '100%' }}>
-        <Typography component="h2" variant="h4" sx={{ mb: 3, textAlign: 'center' }}>
-          📊 Dashboard Summary
+      {/* Top bar with sidebar toggle */}
+      <Box
+        sx={{
+          gridColumn: '1 / -1',
+          display: 'flex',
+          alignItems: 'center',
+          p: 1,
+          borderBottom: `1px solid ${theme.palette.divider}`,
+        }}
+      >
+        <IconButton onClick={() => setShowSidebar((v) => !v)}>
+          {showSidebar ? <ChevronRightIcon /> : <MenuIcon />}
+        </IconButton>
+        <Typography variant="h6" sx={{ ml: 1 }}>
+          Simulation Settings
         </Typography>
-
-        <Grid container spacing={2} sx={{ mb: 2 }}>
-          {statCards.map((card, index) => (
-            <Grid key={index} size={{ xs: 12, sm: 6, lg: 3 }}>
-              <StatCard {...card} />
-            </Grid>
-          ))}
-          <Grid size={{ xs: 12, sm: 6, lg: 3 }}>
-            <HighlightedCard />
-          </Grid>
-          <Grid size={{ xs: 12, md: 6 }}>
-            <SessionsChart />
-          </Grid>
-          <Grid size={{ xs: 12, md: 6 }}>
-            <PageViewsBarChart />
-          </Grid>
-        </Grid>
-
-        <Typography component="h2" variant="h6" sx={{ mb: 2, textAlign: 'center' }}>
-          🧾 Data & Insights
-        </Typography>
-
-        <Grid container spacing={2}>
-          <Grid size={{ xs: 12, lg: 9 }}>
-            <CustomizedDataGrid />
-          </Grid>
-          <Grid size={{ xs: 12, lg: 3 }}>
-            <Stack gap={2} direction={{ xs: 'column', sm: 'row', lg: 'column' }}>
-              <CustomizedTreeView />
-              <ChartUserByCountry />
-            </Stack>
-          </Grid>
-        </Grid>
-
-        <Copyright sx={{ my: 4 }} />
       </Box>
+
+      {/* Main panels */}
+      <Box sx={{ overflow: 'auto', p: 2 }}>
+        <Grid container spacing={2}>
+          {panels.map((cfg, i) => {
+            const layout = layouts.find((l) => l.id === cfg.layoutId)!;
+            return (
+              <Grid
+                key={i}
+                size={{ xs: 12, md: panelCount === 2 ? 6 : 12 }}
+              >
+                <Paper
+                  elevation={2}
+                  sx={{
+                    p: 2,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    height: '100%',
+                  }}
+                >
+                  <Typography variant="subtitle1" gutterBottom>
+                    {layout.name}
+                  </Typography>
+
+                  <FormControl fullWidth sx={{ mb: 2 }}>
+                    <InputLabel>Data Source</InputLabel>
+                    <Select<DataSource>
+                      value={cfg.dataSource}
+                      label="Data Source"
+                      onChange={(e: SelectChangeEvent<DataSource>) => {
+                        const ds = e.target.value as DataSource;
+                        setPanels((p) => {
+                          const nxt = [...p];
+                          nxt[i].dataSource = ds;
+                          return nxt;
+                        });
+                        setGlobalSource(ds);
+                      }}
+                    >
+                      <MenuItem value="live">Live OData Stream</MenuItem>
+                      <MenuItem value="simulation">Simulation (DES)</MenuItem>
+                    </Select>
+                  </FormControl>
+
+                  {cfg.dataSource === 'simulation' ? (
+                    <Box mt="auto">
+                      <Typography gutterBottom>
+                        Task Spawn Rate (tasks/sec)
+                      </Typography>
+                      <Slider
+                        value={cfg.spawnRate}
+                        onChange={(_, v) =>
+                          setPanels((p) => {
+                            const nxt = [...p];
+                            nxt[i].spawnRate = v as number;
+                            return nxt;
+                          })
+                        }
+                        step={1}
+                        marks
+                        min={1}
+                        max={10}
+                        valueLabelDisplay="auto"
+                      />
+                    </Box>
+                  ) : (
+                    <Typography
+                      variant="body2"
+                      color="text.secondary"
+                      mt="auto"
+                      sx={{ fontStyle: 'italic' }}
+                    >
+                      Pulling live tasks for “{layout.name}”.
+                    </Typography>
+                  )}
+                </Paper>
+              </Grid>
+            );
+          })}
+        </Grid>
+      </Box>
+
+      {/* Right sidebar */}
+      {showSidebar && (
+        <Box
+          sx={{
+            borderLeft: `1px solid ${theme.palette.divider}`,
+            height: '100%',
+            overflow: 'auto',
+          }}
+        >
+          <MasterDataSidebar />
+        </Box>
+      )}
     </Box>
   );
 }
