@@ -1,6 +1,6 @@
 // src/hooks/useWarehouseSimulation.ts
 import { useState, useEffect } from "react";
-import { invoke } from '@tauri-apps/api/core'
+import { invoke } from "@tauri-apps/api/core";
 
 export interface StorageBin {
   id: string;
@@ -41,6 +41,7 @@ export interface Task {
 export function useWarehouseSimulation(pollMs = 1000) {
   const [layout, setLayout] = useState<Warehouse | null>(null);
   const [tasks, setTasks] = useState<Task[]>([]);
+  const [path, setPath] = useState<[number, number][]>([]);
 
   // Fetch layout once
   useEffect(() => {
@@ -63,5 +64,56 @@ export function useWarehouseSimulation(pollMs = 1000) {
     return () => clearTimeout(handle);
   }, [pollMs]);
 
-  return { layout, tasks };
+  // Whenever layout or tasks change, compute a path for the first pending Pick task
+  useEffect(() => {
+    if (!layout || tasks.length === 0) {
+      setPath([]);
+      return;
+    }
+
+    // find first Pick task that isn't complete
+    const pickTask = tasks.find((t) => t.task_type.Pick && t.state !== "Complete");
+    if (!pickTask) {
+      setPath([]);
+      return;
+    }
+
+    const { origin_bin: originId, dest_bin: destId } = pickTask.task_type.Pick;
+
+    // flatten all bins
+    const allBins = layout.storage_types.flatMap((st) => st.bins);
+    const origin = allBins.find((b) => b.id === originId);
+    const dest = allBins.find((b) => b.id === destId);
+
+    if (!origin || !dest) {
+      console.warn("Origin or destination bin not found", originId, destId);
+      setPath([]);
+      return;
+    }
+
+    // simple Manhattan path: horizontal then vertical
+    const newPath: [number, number][] = [];
+    const dx = origin.x < dest.x ? 1 : origin.x > dest.x ? -1 : 0;
+    const dy = origin.y < dest.y ? 1 : origin.y > dest.y ? -1 : 0;
+
+    // start at origin
+    let x = origin.x;
+    let y = origin.y;
+    newPath.push([y, x]); // note: [row, col] = [y, x]
+
+    // move horizontally
+    while (x !== dest.x) {
+      x += dx;
+      newPath.push([y, x]);
+    }
+    // move vertically
+    while (y !== dest.y) {
+      y += dy;
+      newPath.push([y, x]);
+    }
+
+    setPath(newPath);
+  }, [layout, tasks]);
+
+  return { layout, tasks, path };
 }
