@@ -4,11 +4,9 @@ import React, { useEffect, useState } from 'react';
 import {
   Box,
   Typography,
-  Paper,
   Tooltip,
   IconButton,
   useTheme,
-  alpha,
   Dialog,
   DialogTitle,
   DialogContent,
@@ -16,59 +14,52 @@ import {
   FormControlLabel,
   Switch,
   Button,
+  Paper,
 } from '@mui/material';
 import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
 import SwapHorizIcon from '@mui/icons-material/SwapHoriz';
 import SettingsIcon from '@mui/icons-material/Settings';
 import RestartAltIcon from '@mui/icons-material/RestartAlt';
 import { useLayoutContext } from '@/contexts/LayoutContext';
-import { getCellColor, getTooltipLabel } from '@/utils/warehouse';
 import LayoutTabs from '../components/LayoutTabs';
 import { useWarehouseSimulation } from '@/hooks/useWarehouseSimulation';
+import { WarehouseSimulator } from '../components/WarehouseSimulator';
+import { useSimulationSettings } from '@/contexts/SimulationSettingsContext';
 
 export default function Warehouse() {
   const {
-    layout: grid,          // your Cell[][]
+    layout: grid,
     layoutName,
     openSelectorDialog,
     resetLayout,
     selectorClosed,
     openSelector,
     setFooterContent,
+    activeId: layoutId,
   } = useLayoutContext();
 
   const theme = useTheme();
   const dark = theme.palette.mode === 'dark';
 
-  // simulation hook: gives path of [row, col] steps
-  const { path } = useWarehouseSimulation(500);
-  const maxStep = path.length - 1;
+  // Fetch simulation path
+  const { path } = useWarehouseSimulation();
 
-  // simulation state
-  const [step, setStep] = useState(0);
-  const [isRunning, setIsRunning] = useState(true);
+  // Per-layout simulation settings
+  const { isRunning, setIsRunning } = useSimulationSettings(layoutId!);
 
-  // settings dialog state
+  // Dialog state for simulation settings
   const [settingsOpen, setSettingsOpen] = useState(false);
 
-  // infinite looping animation
-  useEffect(() => {
-    if (!isRunning || maxStep < 0) return;
-    const timer = window.setTimeout(() => {
-      setStep((s) => (s >= maxStep ? 0 : s + 1));
-    }, 500);
-    return () => clearTimeout(timer);
-  }, [step, maxStep, isRunning]);
-
-  // register footer tabs
+  // register warehouse tabs in footer
   useEffect(() => {
     setFooterContent(<LayoutTabs />);
     return () => setFooterContent(null);
   }, [setFooterContent]);
 
-  // loading / no-layout UI
+  // If no layout loaded...
   if (!grid) {
     if (openSelector && !selectorClosed) return null;
+
     return (
       <Box
         sx={{
@@ -102,9 +93,6 @@ export default function Warehouse() {
       </Box>
     );
   }
-
-  // current highlight coords
-  const [curR, curC] = path[step] || [-1, -1];
 
   return (
     <>
@@ -144,47 +132,8 @@ export default function Warehouse() {
             </Tooltip>
           </Box>
 
-          {/* Animated Grid */}
-          <Box
-            sx={{
-              display: 'grid',
-              gridTemplateColumns: `repeat(${grid[0].length}, 36px)`,
-              gap: 0.5,
-              border: `1px solid ${theme.palette.divider}`,
-              p: 1,
-              backgroundColor: dark ? '#1e1e1e' : '#f7f7f7',
-            }}
-          >
-            {grid.map((row, r) =>
-              row.map((cell, c) => {
-                const isActive = r === curR && c === curC;
-                return (
-                  <Tooltip key={`${r}-${c}`} title={getTooltipLabel(cell.type, cell.label)} arrow>
-                    <Paper
-                      elevation={1}
-                      sx={{
-                        width: 36,
-                        height: 36,
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        fontSize: '0.65rem',
-                        fontWeight: 500,
-                        backgroundColor: isActive
-                          ? alpha(theme.palette.primary.main, 0.5)
-                          : getCellColor(cell.type, dark),
-                        border: `1px solid ${theme.palette.divider}`,
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                      }}
-                    >
-                      {cell.label ?? ''}
-                    </Paper>
-                  </Tooltip>
-                );
-              })
-            )}
-          </Box>
+          {/* Simulator */}
+          <WarehouseSimulator grid={grid} path={path} />
 
           {/* Simulation header */}
           <Box mt={2}>
