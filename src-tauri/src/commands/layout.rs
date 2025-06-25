@@ -16,3 +16,7 @@ pub fn get_all_layouts() -> Vec<Warehouse> {
     // TODO: append any saved custom layouts here
     vec![crate::layout::get_default_layout()]
 }
+// get_default_layout → seed your front-end once
+// get_all_layouts     → later return saved layouts
+// save_layout(...)    → write custom layouts out
+// delete_layout(...)  → remove them

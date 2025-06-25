@@ -14,7 +14,7 @@ import {
   FormControlLabel,
   Switch,
   Button,
-  Paper,
+  Slider,
 } from '@mui/material';
 import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
 import SwapHorizIcon from '@mui/icons-material/SwapHoriz';
@@ -28,7 +28,7 @@ import { useSimulationSettings } from '@/contexts/SimulationSettingsContext';
 
 export default function Warehouse() {
   const {
-    layout: grid,
+    layout: _legacyGrid,     // still in context but no longer used for rendering
     layoutName,
     openSelectorDialog,
     resetLayout,
@@ -39,27 +39,41 @@ export default function Warehouse() {
   } = useLayoutContext();
 
   const theme = useTheme();
-  const dark = theme.palette.mode === 'dark';
 
-  // Fetch simulation path
-  const { path } = useWarehouseSimulation();
+  // Per‐layout simulation settings
+  const {
+    simInterval = 1000,
+    isRunning,
+    setIsRunning,
+  } = useSimulationSettings(layoutId!);
 
-  // Per-layout simulation settings
-  const { isRunning, setIsRunning } = useSimulationSettings(layoutId!);
+  // New 3D hook: gives you the full spec, a 3D grid, tasks, and path
+  const { spec, grid3D, tasks, path } = useWarehouseSimulation(simInterval, isRunning);
 
-  // Dialog state for simulation settings
+  // Track which Z‐layer we’re viewing
+  const [layer, setLayer] = useState(0);
+
+  // Keep layer in bounds whenever grid3D changes
+  useEffect(() => {
+    if (grid3D.length === 0) {
+      setLayer(0);
+    } else if (layer > grid3D.length - 1) {
+      setLayer(grid3D.length - 1);
+    }
+  }, [grid3D, layer]);
+
+  // Settings dialog state
   const [settingsOpen, setSettingsOpen] = useState(false);
 
-  // register warehouse tabs in footer
+  // Register footer tabs
   useEffect(() => {
     setFooterContent(<LayoutTabs />);
-    return () => setFooterContent(null);
+    return () => void setFooterContent(null);
   }, [setFooterContent]);
 
-  // If no layout loaded...
-  if (!grid) {
+  // No layout → show selector prompt (unchanged)
+  if (!spec) {
     if (openSelector && !selectorClosed) return null;
-
     return (
       <Box
         sx={{
@@ -94,21 +108,34 @@ export default function Warehouse() {
     );
   }
 
+  // Once we have spec, show layer slider + simulator
   return (
     <>
-      <Box sx={{ maxWidth: '1600px', mx: 'auto', p: 4 }}>
-        {/* Page Title */}
+      <Box sx={{ maxWidth: 1600, mx: 'auto', p: 4 }}>
+        {/* Title and actions */}
         <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
           <Typography variant="h4">{layoutName}</Typography>
         </Box>
-
-        {/* Grid + Action Buttons */}
+        {/* Layer selector */}
+        {grid3D.length > 1 && (
+          <Box sx={{ mb: 2, px: 2 }}>
+            <Typography gutterBottom>
+              Layer (Z) {layer + 1} of {grid3D.length}
+            </Typography>
+            <Slider
+              value={layer}
+              min={0}
+              max={grid3D.length - 1}
+              onChange={(_, v) => setLayer(v as number)}
+            />
+          </Box>
+        )}
+        {/* Grid + buttons */}
         <Box sx={{ position: 'relative', display: 'inline-block' }}>
-          {/* Top-right action buttons */}
           <Box
             sx={{
               position: 'absolute',
-              top: '-40px',
+              top: -40,
               right: 0,
               display: 'flex',
               gap: 1,
@@ -131,18 +158,14 @@ export default function Warehouse() {
               </IconButton>
             </Tooltip>
           </Box>
+          <WarehouseSimulator
+            grid={grid3D[layer]}
+            path={path}
 
-          {/* Simulator */}
-          <WarehouseSimulator grid={grid} path={path} />
-
-          {/* Simulation header */}
-          <Box mt={2}>
-            <Typography variant="h6">Simulation</Typography>
-          </Box>
+          />
         </Box>
       </Box>
-
-      {/* ── Simulation Settings Dialog ── */}
+      {/* Simulation Settings */}
       <Dialog open={settingsOpen} onClose={() => setSettingsOpen(false)}>
         <DialogTitle>Simulation Settings</DialogTitle>
         <DialogContent dividers>

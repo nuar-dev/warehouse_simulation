@@ -1,12 +1,13 @@
 // src-tauri/src/simulation/generator.rs
 
-use crate::layout::get_default_layout;
+use crate::layout::get_default_layout; // <- import the free function
 use crate::simulation::engine::Simulation;
-use rand::seq::SliceRandom; // ← bring choose() into scope
+use rand::seq::SliceRandom;
 use rand::Rng;
 
 /// For demo: every call, spawn between 0–2 new pick tasks
 pub fn generate_work(sim: &mut Simulation) {
+    // Get the layout
     let layout = get_default_layout();
 
     // collect pick‐zone bins
@@ -28,7 +29,6 @@ pub fn generate_work(sim: &mut Simulation) {
     let mut rng = rand::thread_rng();
     let n = rng.gen_range(0..3); // 0–2 tasks
     for i in 0..n {
-        // choose random origin & dest
         if let (Some(orig), Some(dest)) = (pick_bins.choose(&mut rng), dest_bins.choose(&mut rng)) {
             sim.spawn_pick("ORDER-001", 5 + i, orig.clone(), dest.clone());
         }

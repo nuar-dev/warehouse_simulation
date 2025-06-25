@@ -1,6 +1,6 @@
 // src/app/App.tsx
 
-import React from 'react';
+import React, { Suspense } from 'react';
 import AppTheme from '@/shared-theme/AppTheme';
 import { NotificationProvider } from '@/contexts/NotificationContext';
 import LayoutProvider from '@/contexts/LayoutProvider';
@@ -24,7 +24,9 @@ export default function App() {
             <LayoutProvider>
               <SimulationSettingsProvider>
                 <HashRouter>
-                  <AppRouter />
+                  <Suspense fallback={<div>Loading…</div>}>
+                    <AppRouter />
+                  </Suspense>
                 </HashRouter>
               </SimulationSettingsProvider>
             </LayoutProvider>

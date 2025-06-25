@@ -4,7 +4,7 @@ use anyhow::anyhow;
 use tauri::Error as TauriError;
 use thiserror::Error;
 
-/// Your application‐level errors
+/// application‐level errors
 #[derive(Debug, Error)]
 pub enum AppError {
     #[error("HTTP error: {0}")]

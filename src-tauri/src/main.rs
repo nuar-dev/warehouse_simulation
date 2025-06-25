@@ -16,10 +16,7 @@ mod utils;
 mod commands;
 
 // --- Live commands ---
-use commands::finance::load_company_codes;
 use commands::layout::{get_all_layouts, get_default_layout};
-use commands::procurement::load_vendors;
-use commands::sales::load_customers;
 use commands::warehouse::load_warehouse;
 
 // --- Simulation command ---
@@ -42,9 +39,6 @@ fn main() {
             load_warehouse,
             get_default_layout,
             get_all_layouts,
-            load_vendors,
-            load_customers,
-            load_company_codes,
             // Simulation mode
             get_sim_tasks,
         ])
