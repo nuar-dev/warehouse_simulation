@@ -1,36 +1,75 @@
 // src-tauri/src/simulation/generator.rs
 
-use crate::layout::get_default_layout; // <- import the free function
+use crate::layout::get_default_layout;
+use crate::models::warehouse::ZoneCategory;
 use crate::simulation::engine::Simulation;
-use rand::seq::SliceRandom;
+use crate::simulation::transitions::default_zone_transitions;
+use rand::prelude::*;
 use rand::Rng;
 
-/// For demo: every call, spawn between 0–2 new pick tasks
+/// For demo: every call, spawn between 0–2 new pick tasks and
+/// route them through the zone‐transition graph.
 pub fn generate_work(sim: &mut Simulation) {
-    // Get the layout
+    // 1) Grab the static layout & transition map
     let layout = get_default_layout();
+    let transitions = default_zone_transitions();
 
-    // collect pick‐zone bins
-    let pick_bins: Vec<_> = layout
-        .storage_types
-        .iter()
-        .find(|t| t.id == "pick_zone")
-        .map(|t| t.bins.iter().map(|b| b.id.clone()).collect())
-        .unwrap_or_default();
+    // 2) Build a vector of all bins per ZoneCategory
+    let mut bins_by_zone: std::collections::HashMap<ZoneCategory, Vec<String>> =
+        std::collections::HashMap::new();
+    for st in &layout.storage_types {
+        bins_by_zone
+            .entry(st.zone_category.clone())
+            .or_default()
+            .extend(st.bins.iter().map(|b| b.id.clone()));
+    }
 
-    // collect staging‐out bins
-    let dest_bins: Vec<_> = layout
-        .storage_types
-        .iter()
-        .find(|t| t.id == "staging_out")
-        .map(|t| t.bins.iter().map(|b| b.id.clone()).collect())
-        .unwrap_or_default();
-
-    let mut rng = rand::thread_rng();
-    let n = rng.gen_range(0..3); // 0–2 tasks
+    // 3) Spawn N new pick tasks
+    let mut rng = thread_rng();
+    let n = rng.gen_range(0..3);
     for i in 0..n {
-        if let (Some(orig), Some(dest)) = (pick_bins.choose(&mut rng), dest_bins.choose(&mut rng)) {
-            sim.spawn_pick("ORDER-001", 5 + i, orig.clone(), dest.clone());
-        }
+        // start in InboundRamp
+        let mut current_zone = ZoneCategory::InboundRamp;
+        let mut origin_bin = {
+            let vec = &bins_by_zone[&current_zone];
+            vec.choose(&mut rng).unwrap().clone()
+        };
+
+        // Walk the Markov chain until we hit the final “OutboundRamp”
+        let dest_bin = loop {
+            let choices = &transitions[&current_zone];
+            // pick one next zone by weight
+            let total: f64 = choices.iter().map(|(_, w)| *w).sum();
+            let mut pick = rng.gen_range(0.0..total);
+            let mut next_zone = &choices[0].0;
+            for (zone, w) in choices {
+                if pick <= *w {
+                    next_zone = zone;
+                    break;
+                }
+                pick -= *w;
+            }
+
+            // select a random bin in that zone
+            let bin_list = &bins_by_zone[next_zone];
+            let chosen = bin_list.choose(&mut rng).unwrap().clone();
+
+            // if we’ve reached OutboundRamp, that’s our dest
+            if *next_zone == ZoneCategory::OutboundRamp {
+                break chosen;
+            }
+
+            // else continue walking
+            origin_bin = chosen.clone();
+            current_zone = next_zone.clone();
+        };
+
+        // finally spawn the pick through Simulation
+        sim.spawn_pick(
+            &format!("ORDER-{}", sim.tasks.len() + 1),
+            5 + i,
+            origin_bin,
+            dest_bin,
+        );
     }
 }

@@ -1,6 +1,5 @@
 // src/features/warehouse/pages/Warehouse.tsx
-
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react'
 import {
   Box,
   Typography,
@@ -15,65 +14,54 @@ import {
   Switch,
   Button,
   Slider,
-} from '@mui/material';
-import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
-import SwapHorizIcon from '@mui/icons-material/SwapHoriz';
-import SettingsIcon from '@mui/icons-material/Settings';
-import RestartAltIcon from '@mui/icons-material/RestartAlt';
-import { useLayoutContext } from '@/contexts/LayoutContext';
-import LayoutTabs from '../components/LayoutTabs';
-import { useWarehouseSimulation } from '@/hooks/useWarehouseSimulation';
-import { WarehouseSimulator } from '../components/WarehouseSimulator';
-import { useSimulationSettings } from '@/contexts/SimulationSettingsContext';
+} from '@mui/material'
+import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline'
+import SwapHorizIcon from '@mui/icons-material/SwapHoriz'
+import SettingsIcon from '@mui/icons-material/Settings'
+import RestartAltIcon from '@mui/icons-material/RestartAlt'
+import { useLayoutContext } from '@/contexts/LayoutContext'
+import LayoutTabs from '../components/LayoutTabs'
+import { useWarehouseLayout } from '@/hooks/useWarehouseLayout'
+import { WarehouseSimulator } from '../components/WarehouseSimulator'
+import { useSimulationSettings } from '@/contexts/SimulationSettingsContext'
 
 export default function Warehouse() {
+  const theme = useTheme()
   const {
-    layout: _legacyGrid,     // still in context but no longer used for rendering
     layoutName,
+    openSelector,
+    selectorClosed,
     openSelectorDialog,
     resetLayout,
-    selectorClosed,
-    openSelector,
     setFooterContent,
-    activeId: layoutId,
-  } = useLayoutContext();
+    activeId,
+  } = useLayoutContext()
 
-  const theme = useTheme();
+  // 1) load layout + grid
+  const { spec, grid2D } = useWarehouseLayout()
 
-  // Per‐layout simulation settings
-  const {
-    simInterval = 1000,
-    isRunning,
-    setIsRunning,
-  } = useSimulationSettings(layoutId!);
+  // 2) sim settings
+  const { isRunning, setIsRunning } = useSimulationSettings(activeId!)
 
-  // New 3D hook: gives you the full spec, a 3D grid, tasks, and path
-  const { spec, grid3D, tasks, path } = useWarehouseSimulation(simInterval, isRunning);
+  // local UI
+  const [layer, setLayer] = useState(0)
+  const [settingsOpen, setSettingsOpen] = useState(false)
 
-  // Track which Z‐layer we’re viewing
-  const [layer, setLayer] = useState(0);
-
-  // Keep layer in bounds whenever grid3D changes
+  // keep layer valid
   useEffect(() => {
-    if (grid3D.length === 0) {
-      setLayer(0);
-    } else if (layer > grid3D.length - 1) {
-      setLayer(grid3D.length - 1);
-    }
-  }, [grid3D, layer]);
+    if (grid2D.length === 0) setLayer(0)
+    else if (layer >= grid2D.length) setLayer(grid2D.length - 1)
+  }, [grid2D, layer])
 
-  // Settings dialog state
-  const [settingsOpen, setSettingsOpen] = useState(false);
-
-  // Register footer tabs
+  // footer tabs
   useEffect(() => {
-    setFooterContent(<LayoutTabs />);
-    return () => void setFooterContent(null);
-  }, [setFooterContent]);
+    setFooterContent(<LayoutTabs />)
+    return () => setFooterContent(null)
+  }, [setFooterContent])
 
-  // No layout → show selector prompt (unchanged)
+  // no spec → prompt or auto-open selector
   if (!spec) {
-    if (openSelector && !selectorClosed) return null;
+    if (openSelector && !selectorClosed) return null
     return (
       <Box
         sx={{
@@ -105,43 +93,17 @@ export default function Warehouse() {
           </Tooltip>
         )}
       </Box>
-    );
+    )
   }
 
-  // Once we have spec, show layer slider + simulator
+  // main view
   return (
     <>
       <Box sx={{ maxWidth: 1600, mx: 'auto', p: 4 }}>
-        {/* Title and actions */}
+        {/* Header */}
         <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
           <Typography variant="h4">{layoutName}</Typography>
-        </Box>
-        {/* Layer selector */}
-        {grid3D.length > 1 && (
-          <Box sx={{ mb: 2, px: 2 }}>
-            <Typography gutterBottom>
-              Layer (Z) {layer + 1} of {grid3D.length}
-            </Typography>
-            <Slider
-              value={layer}
-              min={0}
-              max={grid3D.length - 1}
-              onChange={(_, v) => setLayer(v as number)}
-            />
-          </Box>
-        )}
-        {/* Grid + buttons */}
-        <Box sx={{ position: 'relative', display: 'inline-block' }}>
-          <Box
-            sx={{
-              position: 'absolute',
-              top: -40,
-              right: 0,
-              display: 'flex',
-              gap: 1,
-              zIndex: 10,
-            }}
-          >
+          <Box>
             <Tooltip title="Change Layout">
               <IconButton size="small" onClick={openSelectorDialog}>
                 <SwapHorizIcon fontSize="small" />
@@ -158,24 +120,35 @@ export default function Warehouse() {
               </IconButton>
             </Tooltip>
           </Box>
-          <WarehouseSimulator
-            grid={grid3D[layer]}
-            path={path}
+        </Box>
 
-          />
+        {/* Slider—only 1 layer, so hidden */}
+        {grid2D.length > 1 && (
+          <Box sx={{ mb: 2, px: 2 }}>
+            <Typography gutterBottom>
+              Layer {layer + 1} of {grid2D.length}
+            </Typography>
+            <Slider
+              value={layer}
+              min={0}
+              max={grid2D.length - 1}
+              onChange={(_, v) => setLayer(v as number)}
+            />
+          </Box>
+        )}
+
+        {/* Simulator */}
+        <Box sx={{ position: 'relative', display: 'inline-block' }}>
+          <WarehouseSimulator grid={grid2D} path={[]} />
         </Box>
       </Box>
-      {/* Simulation Settings */}
+
+      {/* Settings Dialog */}
       <Dialog open={settingsOpen} onClose={() => setSettingsOpen(false)}>
         <DialogTitle>Simulation Settings</DialogTitle>
         <DialogContent dividers>
           <FormControlLabel
-            control={
-              <Switch
-                checked={isRunning}
-                onChange={(e) => setIsRunning(e.target.checked)}
-              />
-            }
+            control={<Switch checked={isRunning} onChange={(e) => setIsRunning(e.target.checked)} />}
             label="Running"
           />
         </DialogContent>
@@ -184,5 +157,5 @@ export default function Warehouse() {
         </DialogActions>
       </Dialog>
     </>
-  );
+  )
 }

@@ -3,52 +3,115 @@
 /**
  * Returns the hover‐tooltip for a given bin type + label.
  */
-export const getTooltipLabel = (type: string, label?: string): string => {
+export const getTooltipLabel = (
+  type: string,
+  label?: string
+): string => {
   const name = label ?? ''
   const icons: Record<string, string> = {
-    inbound_ramp:  `📦 Inbound Ramp`,
-    staging_in:    `🛬 Staging In`,
-    returns:       `↩️ Returns`,
-    high_rack:     `🏗️ High Rack`,
-    pick_zone:     `🛒 Pick Zone`,
-    comm:          `🧩 Commissioning`,
-    staging_out:   `🚚 Staging Out`,
-    vas:           `🛠️ VAS`,
-    damaged:       `⚠️ Damaged`,
-    packing:       `📦 Packing`,
-    outbound_ramp: `📤 Outbound Ramp`,
-    // ← add any other storage_type.id you use here…
+    inbound_ramp:   `📦 Inbound Ramp`,
+    inbound_buffer: `📥 Inbound Buffer`,
+    outbound_ramp:  `📤 Outbound Ramp`,
+    outbound_buffer:`📤 Outbound Buffer`,
 
-    // **Road & wall**:
-    road:          `🛣️ Road`,
-    wall:          `🧱 Wall`,
+    goods_receipt:     `🔍 Goods Receipt`,
+    returns:           `↩️ Returns`,
+
+    high_runner_1:   `🏗️ High‐Speed Rack A`,
+    high_runner_2:   `🏗️ High‐Speed Rack B`,
+    reserve:         `🗄️ Reserve Zone`,
+    special_stock:   `🎯 Special Stock`,
+
+    kanban:          `🎛️ Kanban`,
+    conveyor:        `🔄 Conveyor`,
+
+    pick_zone:       `🛒 Pick Zone`,
+
+    commissioning:   `🧩 Commissioning`,
+    packing:         `📦 Packing`,
+
+    vas:             `🛠️ VAS Area`,
+    quality_inspection: `✅ Quality Inspection`,
+
+    assembly:        `🔧 Assembly Bench`,
+    post_assembly:   `🔨 Post Assembly`,
+
+    road:            `🛣️ Road`,
+    wall:            `🧱 Wall`,
   }
 
   return `${icons[type] ?? '❓'} ${name}`
 }
 
 /**
- * Returns the background fill color for a given bin type.
+ * Interpolate between two hex colors.
  */
-export const getCellColor = (type: string, isDark: boolean = false): string => {
-  const map: Record<string, string> = {
-    inbound_ramp:  isDark ? '#6d8e4e' : '#aed581',
-    staging_in:    isDark ? '#caa300' : '#fff176',
-    returns:       isDark ? '#cc6d4d' : '#ffab91',
-    high_rack:     isDark ? '#5472a4' : '#bbdefb',
-    pick_zone:     isDark ? '#4a7b5d' : '#c8e6c9',
-    comm:          isDark ? '#a65757' : '#ffcdd2',
-    staging_out:   isDark ? '#b97b00' : '#ffcc80',
-    vas:           isDark ? '#8e659c' : '#e1bee7',
-    damaged:       isDark ? '#b94c4c' : '#ef9a9a',
-    packing:       isDark ? '#bfa700' : '#fff176',
-    outbound_ramp: isDark ? '#547ba4' : '#64b5f6',
+function lerpColor(a: string, b: string, t: number): string {
+  const ia = parseInt(a.slice(1), 16)
+  const ib = parseInt(b.slice(1), 16)
+  const ra = (ia >> 16) & 0xff, ga = (ia >> 8) & 0xff, ba = ia & 0xff
+  const rb = (ib >> 16) & 0xff, gb = (ib >> 8) & 0xff, bb = ib & 0xff
+  const r = Math.round(ra + (rb - ra) * t)
+  const g = Math.round(ga + (gb - ga) * t)
+  const b2 = Math.round(ba + (bb - ba) * t)
+  return `#${((r<<16)|(g<<8)|b2).toString(16).padStart(6,'0')}`
+}
 
-    // **Road & wall**:
-    road:          isDark ? '#424242' : '#eeeeee',
-    wall:          isDark ? '#546e7a' : '#b0bec5',
+/**
+ * Returns the background fill color (or pulsing style) for a given bin type.
+ *
+ * @param type         the storage_type.id
+ * @param fillPercent  optional number 0–1, if provided overrides static map with green→red gradient
+ * @param pulse        optional flag to mark this zone as “animating” (add your CSS class)
+ */
+export const getCellStyle = (
+  type: string,
+  fillPercent?: number,
+  pulse: boolean = false
+): { backgroundColor: string; className?: string } => {
+  let backgroundColor: string
+
+  if (fillPercent != null) {
+    // green → red
+    backgroundColor = lerpColor('#00ff00', '#ff0000', Math.min(1, Math.max(0, fillPercent)))
+  } else {
+    // static fallback map
+    const map: Record<string, string> = {
+      inbound_ramp:    '#aed581',
+      inbound_buffer:  '#90A4AE',
+      outbound_ramp:   '#64b5f6',
+      outbound_buffer: '#B0BEC5',
+
+      goods_receipt:   '#FFCA28',
+      returns:         '#ff8a65',
+
+      high_runner_1:   '#90caf9',
+      high_runner_2:   '#81D4FA',
+      reserve:         '#FFB300',
+      special_stock:   '#A1887F',
+
+      kanban:          '#4DB6AC',
+      conveyor:        '#CFD8DC',
+
+      pick_zone:       '#c8e6c9',
+
+      commissioning:   '#EF9A9A',
+      packing:         '#FDD835',
+
+      vas:             '#CE93D8',
+      quality_inspection: '#C8E6C9',
+
+      assembly:        '#D4E157',
+      post_assembly:   '#8D6E63',
+
+      road:            '#EEEEEE',
+      wall:            '#B0BEC5',
+    }
+    backgroundColor = map[type] ?? '#E0E0E0'
   }
 
-  // fallback if something unexpected comes through
-  return map[type] ?? (isDark ? '#666666' : '#e0e0e0')
+  return {
+    backgroundColor,
+    className: pulse ? 'cell-pulse' : undefined,
+  }
 }

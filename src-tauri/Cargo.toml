@@ -1,8 +1,12 @@
+# ┌────────────────────────────────────────────────────────────────────────────┐
+# │                        Warehouse Simulation                                │
+# │ A desktop Warehouse Simulation app with SAP master-data integration       │
+# └────────────────────────────────────────────────────────────────────────────┘
+
 [package]
 name = "warehouse_simulation"
 version = "0.1.0"
 edition = "2021"
-
 description = "A desktop Warehouse Simulation app with SAP master-data integration"
 authors = ["nuar-dev <nuar@nuar.de>"]
 license = "MIT OR Apache-2.0"
@@ -10,42 +14,55 @@ repository = "https://github.com/nuar-dev/warehouse_simulation"
 homepage = "https://github.com/nuar-dev/warehouse_simulation#readme"
 documentation = "https://docs.rs/warehouse_simulation_lib"
 readme = "README.md"
-keywords = ["tauri", "warehouse", "sap", "simulation", "logistics", "procces_mining"]
+keywords = ["tauri", "warehouse", "sap", "simulation", "logistics", "process_mining"]
 categories = ["command-line-utilities", "data-processing", "gui"]
-# Custom metadata for your own CI/tooling, if needed
+
+# Custom metadata for CI/tooling
 [package.metadata]
 default-layout-path = "layouts/default.json"
 
+# Build as both a static and dynamic library for FFI/plugins
 [lib]
-# The `_lib` suffix prevents name collisions on Windows.
 name = "warehouse_simulation_lib"
 crate-type = ["staticlib", "cdylib", "rlib"]
 
+# ──────────────────────────────────────────────────────────────────────────────
+# Build-time plugin for Tauri (generates assets, etc.)
 [build-dependencies]
 tauri-build = { version = "2", features = [] }
 
+# ──────────────────────────────────────────────────────────────────────────────
+# Core runtime and UI framework
 [dependencies]
-tauri = { version = "2", features = [] }
-tauri-plugin-opener = "2"
-tauri-plugin-window-state = { version = "2.0.0-rc.5" }
-serde = { version = "1", features = ["derive"] }
-serde_json = "1"
-chrono = { version = "0.4", features = ["serde"] }
-async-trait = "0.1"
-rand ="0.8"
-once_cell ="1.17"
-actix-web = "4"
-log = "0.4"
+tauri                   = { version = "2", features = [] }
+tauri-plugin-opener     = "2"         # open external links
+tauri-plugin-window-state = "2.0.0-rc.5"  # persist/restore window
 
-# Error handling
-anyhow = "1.0"
-thiserror = "1.0"
+# Serialization & data formats
+serde                   = { version = "1", features = ["derive"] }
+serde_json              = "1"
+chrono                  = { version = "0.4", features = ["serde"] }
 
-# Async runtime
-tokio = { version = "1.0", features = ["macros", "rt-multi-thread"] }
+# Async traits & utilities
+async-trait             = "0.1"
+once_cell               = "1.17"
+rand                    = "0.8"
+uuid                    = { version = "1.1", features = ["v4"] }
+reqwest                 = { version = "0.11", features = ["json", "blocking", "rustls-tls"] }
 
-# UUID generation
-uuid = { version = "1.1", features = ["v4"] }
+# Logging & error handling
+log                     = "0.4"
+env_logger              = "0.10"
+anyhow                  = "1.0"
+thiserror               = "1.0"
 
-# HTTP client
-reqwest = { version = "0.11", features = ["json", "blocking", "rustls-tls"] }
+# Async runtime for both Tauri and Actix
+tokio                   = { version = "1.0", features = ["macros", "rt-multi-thread"] }
+
+# Web server framework for HTTP API
+actix-web               = "4"
+
+# ──────────────────────────────────────────────────────────────────────────────
+# (Optional) CLI / build tooling, if needed
+# [dev-dependencies]
+# clap                   = { version = "4.0", features = ["derive"] }

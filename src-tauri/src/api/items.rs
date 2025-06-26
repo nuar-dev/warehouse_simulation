@@ -1,6 +1,4 @@
-// src-tauri/src/api/items.rs
-
-use crate::models::warehouse::Item;
+use crate::models::item::Item; // import Item from models/item.rs
 use crate::services::items::{load_items, save_items};
 use actix_web::{get, post, web, HttpResponse, Responder};
 use log::{error, info};

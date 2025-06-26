@@ -1,6 +1,6 @@
 pub mod items;
 mod mock_odata_client;
-mod resource;
+pub mod resource;
 pub mod simulation;
 pub mod strategies;
 pub mod warehouse;

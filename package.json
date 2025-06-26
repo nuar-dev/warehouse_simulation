@@ -22,7 +22,7 @@
     "@mui/x-date-pickers": "^8.5.0",
     "@mui/x-tree-view": "^8.5.0",
     "@react-spring/web": "^10.0.1",
-    "@tauri-apps/api": "^2.5.0",
+    "@tauri-apps/api": "^2.6.0",
     "@tauri-apps/plugin-opener": "^2",
     "anyhow": "^3.4.0",
     "dayjs": "^1.11.13",

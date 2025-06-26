@@ -5,4 +5,5 @@
 
 pub mod engine;
 pub mod generator;
+pub mod transitions;
 pub mod types;
